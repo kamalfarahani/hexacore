@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from types import TracebackType
+from typing import Self
 
 from pydantic import BaseModel
 
@@ -19,17 +20,16 @@ class BaseUnitOfWork[M: BaseModel](ABC):
         """
         raise NotImplementedError()
 
-    @abstractmethod
-    def __enter__(self) -> "BaseUnitOfWork":
+    def __enter__(self) -> Self:
         """
         Enter the unit of work context manager.
 
         Returns:
             BaseUnitOfWork: The unit of work context manager.
         """
-        raise NotImplementedError()
+        self.start()
+        return self
 
-    @abstractmethod
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
@@ -38,6 +38,19 @@ class BaseUnitOfWork[M: BaseModel](ABC):
     ) -> None:
         """
         Exit the unit of work context manager.
+        """
+        self.done()
+
+    @abstractmethod
+    def start(self) -> None:
+        """
+        Prepare the unit of work for use.
+        """
+        raise NotImplementedError()
+
+    def done(self) -> None:
+        """
+        Finish the unit of work and release any resources.
         """
         raise NotImplementedError()
 
