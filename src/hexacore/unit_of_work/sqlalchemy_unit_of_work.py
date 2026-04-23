@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from types import TracebackType
 
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -60,32 +59,24 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
         """
         return self._repo_factory(self.session)
 
-    def __enter__(self) -> "SQLAlchemyUnitOfWork":
+    def start(self) -> None:
         """
-        Enter the unit of work context manager.
+        Make the unit of work ready for use.
+        Initializes the database session.
 
-        Returns:
-            SQLAlchemyUnitOfWork: The unit of work context manager.
+        Side effects:
+            - Initializes the database session.
         """
         self._session: Session = self._session_factory()
 
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
+    def done(self) -> None:
         """
-        Exit the unit of work context manager.
-        If we don’t commit, or if we exit the context manager by raising an error,
-        we do a rollback. (The rollback has no effect if `commit()` has been called.)
+        Finish the unit of work and release any resources.
+        Rolls back any uncommitted transactions and closes the database session.
 
-        Args:
-            exc_type (type[BaseException] | None): The exception type.
-            exc_val (BaseException | None): The exception value.
-            exc_tb (TracebackType | None): The exception traceback.
+        Side effects:
+            - Rolls back any uncommitted transactions.
+            - Closes the database session.
         """
         self.rollback()
         if self._session is not None:
@@ -94,6 +85,9 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
     def commit(self) -> None:
         """
         Commit the transaction.
+
+        Side effects:
+            - Commits the transaction.
         """
         if self._session is not None:
             self._session.commit()
@@ -101,6 +95,9 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
     def rollback(self) -> None:
         """
         Rollback the transaction.
+
+        Side effects:
+            - Rolls back the transaction.
         """
         if self._session is not None:
             self._session.rollback()
