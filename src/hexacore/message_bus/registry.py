@@ -14,7 +14,10 @@ class CommandRegistry:
     A registry for command handlers.
     """
 
-    def __init__(self, default_handler_factory: Callable[[], BaseCommandHandler]):
+    def __init__(
+        self,
+        default_handler_factory: Callable[[], BaseCommandHandler],
+    ) -> None:
         """
         Initializes the command registry with an empty defaultdict.
 
@@ -55,7 +58,10 @@ class EventRegistry:
     A registry for event handlers.
     """
 
-    def __init__(self, default_handler_factory: Callable[[], list[BaseEventHandler]]):
+    def __init__(
+        self,
+        default_handler_factory: Callable[[], list[BaseEventHandler]],
+    ) -> None:
         """
         Initializes the event registry with an empty defaultdict.
 
