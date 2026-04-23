@@ -7,7 +7,7 @@ from .db_promise import SQLAlchemyDBPromise
 from .model_orm import ModelORM
 
 
-class SqlAlchemyRepository[M: BaseModel](BaseRepository[M]):
+class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
     """
     SQLAlchemy repository implementation.
     """

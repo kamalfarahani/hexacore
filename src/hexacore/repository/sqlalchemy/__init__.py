@@ -1,9 +1,9 @@
 from .db_promise import SQLAlchemyDBPromise
 from .model_orm import ModelORM
-from .repository import SqlAlchemyRepository
+from .repository import SQLAlchemyRepository
 
 __all__ = [
-    "SqlAlchemyRepository",
     "SQLAlchemyDBPromise",
     "ModelORM",
+    "SQLAlchemyRepository",
 ]

@@ -1,7 +1,7 @@
 from .base import BaseRepository
-from .sqlalchemy import SqlAlchemyRepository
+from .sqlalchemy import SQLAlchemyRepository
 
 __all__ = [
     "BaseRepository",
-    "SqlAlchemyRepository",
+    "SQLAlchemyRepository",
 ]

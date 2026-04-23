@@ -3,12 +3,12 @@ from collections.abc import Callable
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from hexacore.repository import SqlAlchemyRepository
+from hexacore.repository import SQLAlchemyRepository
 
 from .base_unit_of_work import BaseUnitOfWork
 
 type SessionFactory = Callable[[], Session]
-type RepoFactory[M: BaseModel] = Callable[[Session], SqlAlchemyRepository[M]]
+type RepoFactory[M: BaseModel] = Callable[[Session], SQLAlchemyRepository[M]]
 
 
 class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
@@ -29,7 +29,7 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
         Initialize the unit of work.
 
         Args:
-            repository (SqlAlchemyRepository[M]): The repository.
+            repository (SQLAlchemyRepository[M]): The repository.
             session_factory (SessionFactory): The session factory.
         """
         self._session_factory = session_factory
@@ -50,12 +50,12 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
         return self._session
 
     @property
-    def repository(self) -> SqlAlchemyRepository[M]:
+    def repository(self) -> SQLAlchemyRepository[M]:
         """
         Get the repository.
 
         Returns:
-            SqlAlchemyRepository[M]: The repository.
+            SQLAlchemyRepository[M]: The repository.
         """
         return self._repo_factory(self.session)
 
