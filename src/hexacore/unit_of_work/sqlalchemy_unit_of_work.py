@@ -18,6 +18,7 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
     """
 
     _session: Session | None
+    _session_factory: SessionFactory
     _repo_factory: RepoFactory[M]
 
     def __init__(
