@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 
+from pydantic import BaseModel
+
 from .db_promise import BaseDBPromise
 
 
-class BaseRepository[M](ABC):
+class BaseRepository[M: BaseModel](ABC):
     """
     Base repository interface.
     """

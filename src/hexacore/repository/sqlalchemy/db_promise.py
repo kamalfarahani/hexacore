@@ -1,10 +1,12 @@
+from pydantic import BaseModel
+
 from hexacore.repository.base import BaseDBPromise
 from hexacore.repository.exceptions import NotFoundError, PromiseNotReadyError
 
 from .model_orm import ModelORM
 
 
-class SQLAlchemyDBPromise[T](BaseDBPromise[T]):
+class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
     """
     A SQLAlchemy implementation of the database promise pattern.
 
@@ -12,27 +14,27 @@ class SQLAlchemyDBPromise[T](BaseDBPromise[T]):
     providing a way to track whether the object has been persisted to the database.
     """
 
-    model_orm: ModelORM[T] | None
+    model_orm: ModelORM[M] | None
 
     def __init__(
         self,
-        model_orm: ModelORM[T] | None,
+        model_orm: ModelORM[M] | None,
     ) -> None:
         """
         Initialize the promise.
 
         Args:
-            model_orm (ModelORM[T] | None): The corresponding ORM object, if available.
+            model_orm (ModelORM[M] | None): The corresponding ORM object, if available.
         """
         self.model_orm = model_orm
 
     @property
-    def value(self) -> T:
+    def value(self) -> M:
         """
         Get the value of the promise.
 
         Returns:
-            T: The value of the promise.
+            M: The value of the promise.
 
         Raises:
             NotFoundError: If the value is not found in the database.
@@ -59,7 +61,7 @@ class SQLAlchemyDBPromise[T](BaseDBPromise[T]):
         return False
 
     @property
-    def result(self) -> ModelORM[T]:
+    def result(self) -> ModelORM[M]:
         """
         Get the result of the promise.
 

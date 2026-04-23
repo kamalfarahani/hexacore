@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Protocol
 
+from pydantic import BaseModel
+
 
 class WithID(Protocol):
     """
@@ -10,7 +12,7 @@ class WithID(Protocol):
     def get_id(self) -> int: ...
 
 
-class BaseDBPromise[T](ABC):
+class BaseDBPromise[M: BaseModel](ABC):
     """
     Base database promise interface.
     This interface is used to represent an action for the database that can be executed later.
@@ -18,12 +20,12 @@ class BaseDBPromise[T](ABC):
 
     @property
     @abstractmethod
-    def value(self) -> T:
+    def value(self) -> M:
         """
         Get the value of the promise.
 
         Returns:
-            T: The value of the promise.
+            M: The value of the promise.
 
         Raises:
             NotFoundError: If the value is not found in the database.

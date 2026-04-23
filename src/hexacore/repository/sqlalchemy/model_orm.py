@@ -1,7 +1,8 @@
+from pydantic import BaseModel
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 
-class ModelORM[M](DeclarativeBase):
+class ModelORM[M: BaseModel](DeclarativeBase):
     """
     Base class for SQLAlchemy ORM entities.
     """
