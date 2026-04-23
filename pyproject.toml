@@ -1,7 +1,7 @@
 [project]
 name = "hexacore"
 version = "0.1.0"
-description = "Add your description here"
+description = "A hexagonal architecture framework for Python."
 readme = "README.md"
 authors = [
     { name = "Kamal", email = "kamal.farahani90@gmail.com" }
