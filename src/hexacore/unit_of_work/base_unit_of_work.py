@@ -1,17 +1,19 @@
 from abc import ABC, abstractmethod
 from types import TracebackType
 
+from pydantic import BaseModel
+
 from hexacore.repository import BaseRepository
 
 
-class BaseUnitOfWork[R: BaseRepository](ABC):
+class BaseUnitOfWork[M: BaseModel](ABC):
     """
     Base unit of work interface.
     """
 
     @property
     @abstractmethod
-    def repository(self) -> R:
+    def repository(self) -> BaseRepository[M]:
         """
         Get the repository.
         """

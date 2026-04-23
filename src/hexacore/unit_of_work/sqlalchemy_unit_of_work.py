@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from types import TracebackType
 
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from hexacore.repository import SqlAlchemyRepository
@@ -8,10 +9,10 @@ from hexacore.repository import SqlAlchemyRepository
 from .base_unit_of_work import BaseUnitOfWork
 
 type SessionFactory = Callable[[], Session]
-type RepoFactory[M] = Callable[[Session], SqlAlchemyRepository[M]]
+type RepoFactory[M: BaseModel] = Callable[[Session], SqlAlchemyRepository[M]]
 
 
-class SQLAlchemyUnitOfWork[M](BaseUnitOfWork):
+class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
     """
     SQLAlchemy unit of work implementation.
     """
