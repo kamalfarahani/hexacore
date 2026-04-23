@@ -37,8 +37,14 @@ class BaseEventListener(ABC):
         raise NotImplementedError()
 
     def __enter__(self) -> Self:
+        """
+        Enter the context manager and open the connection.
+        """
         self.open()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """
+        Exit the context manager and close the connection.
+        """
         self.close()
