@@ -5,13 +5,15 @@ from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.connection import Parameters
 
-from .base_broker_connection import BaseBrokerConnection
+from .base import BaseBrokerConnection
+from .exceptions import ConsumeError, OpenError, PublishError
 
 type MaybeRabbitMQConnectionPair = tuple[BlockingConnection, BlockingChannel] | None
 
 
 class RabbitMQConnection(BaseBrokerConnection):
-    """RabbitMQ connection manager for message broker operations.
+    """
+    RabbitMQ connection manager for message broker operations.
 
     This class provides a high-level interface for managing RabbitMQ connections,
     including queue and exchange management, message publishing, and consumption.
@@ -49,10 +51,10 @@ class RabbitMQConnection(BaseBrokerConnection):
             BlockingChannel: The channel from the connection pair.
 
         Raises:
-            RuntimeError: If the connection is not open.
+            OpenError: If the connection is not open.
         """
         if self._connection_pair is None:
-            raise RuntimeError("Connection is not open. Call open() first.")
+            raise OpenError("Connection is not open. Call open() first.")
         _, channel = self._connection_pair
         return channel
 
@@ -64,10 +66,10 @@ class RabbitMQConnection(BaseBrokerConnection):
             Opens the connection and channel.
 
         Raises:
-            RuntimeError: If the connection is already open.
+            OpenError: If the connection is already open.
         """
         if self._connection_pair is not None:
-            raise RuntimeError("Connection is already open. Call close() first.")
+            raise OpenError("Connection is already open. Call close() first.")
         connection = BlockingConnection(self._parameters)
         channel = connection.channel()
         self._connection_pair = (connection, channel)
@@ -103,7 +105,7 @@ class RabbitMQConnection(BaseBrokerConnection):
             Declares the queue on the RabbitMQ server.
 
         Raises:
-            RuntimeError: If the connection is not open.
+            OpenError: If the connection is not open.
         """
         self._get_channel().queue_declare(
             queue=queue_name,
@@ -128,7 +130,7 @@ class RabbitMQConnection(BaseBrokerConnection):
             Declares the exchange on the RabbitMQ server.
 
         Raises:
-            RuntimeError: If the connection is not open.
+            OpenError: If the connection is not open.
         """
         self._get_channel().exchange_declare(
             exchange=exchange_name,
@@ -156,7 +158,7 @@ class RabbitMQConnection(BaseBrokerConnection):
             Binds the queue to the exchange on the RabbitMQ server.
 
         Raises:
-            RuntimeError: If the connection is not open.
+            OpenError: If the connection is not open.
         """
         self._get_channel().queue_bind(
             queue=queue_name,
@@ -182,13 +184,18 @@ class RabbitMQConnection(BaseBrokerConnection):
             Publishes the data to the specified queue.
 
         Raises:
-            RuntimeError: If the connection is not open.
+            PublishError: If there is an error publishing to the exchange.
         """
-        self._get_channel().basic_publish(
-            exchange=exchange_name,
-            routing_key=routing_key,
-            body=json.dumps(data),
-        )
+        try:
+            self._get_channel().basic_publish(
+                exchange=exchange_name,
+                routing_key=routing_key,
+                body=json.dumps(data),
+            )
+        except Exception as e:
+            raise PublishError(
+                f"Failed to publish to exchange '{exchange_name}' with routing key '{routing_key}': {e}"
+            ) from e
 
     def consume(
         self,
@@ -204,10 +211,10 @@ class RabbitMQConnection(BaseBrokerConnection):
             dict: The consumed message containing method_frame, header_frame, and body.
 
         Raises:
-            RuntimeError: If the connection is not open.
+            ConsumeError: If there is an error consuming from the queue.
         """
-        channel = self._get_channel()
         try:
+            channel = self._get_channel()
             for method_frame, header_frame, body in channel.consume(
                 queue=queue_name,
                 auto_ack=True,
@@ -219,5 +226,9 @@ class RabbitMQConnection(BaseBrokerConnection):
                     "header_frame": header_frame,
                     "body": body,
                 }
+        except Exception as e:
+            raise ConsumeError(
+                f"Failed to consume from queue '{queue_name}': {e}"
+            ) from e
         finally:
             channel.cancel()
