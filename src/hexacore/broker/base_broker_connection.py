@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Self
+from typing import Generator, Self
 
 
 class BaseBrokerConnection(ABC):
@@ -69,6 +69,39 @@ class BaseBrokerConnection(ABC):
             queue_name (str): The name of the queue to bind.
             exchange_name (str): The name of the exchange to bind to.
             routing_key (str): The routing key for the binding.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def publish(
+        self,
+        exchange_name: str,
+        routing_key: str,
+        data: dict,
+    ) -> None:
+        """
+        Publish data to an exchange with a routing key.
+
+        Args:
+            exchange_name (str): The name of the exchange to publish to.
+            routing_key (str): The routing key for the message.
+            data (dict): The data to publish.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def consume(
+        self,
+        queue_name: str,
+    ) -> Generator[dict, None, None]:
+        """
+        Consume messages from a queue.
+
+        Args:
+            queue_name (str): The name of the queue to consume from.
+
+        Yields:
+            dict: The consumed message.
         """
         raise NotImplementedError()
 
