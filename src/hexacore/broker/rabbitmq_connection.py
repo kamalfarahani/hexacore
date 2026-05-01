@@ -160,7 +160,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         data: dict,
     ) -> None:
         """
-        Publish data to a queue.
+        Publish data to an exchange.
 
         Args:
             exchange_name (str): The name of the exchange to publish to.
@@ -195,12 +195,18 @@ class RabbitMQConnection(BaseBrokerConnection):
         Raises:
             RuntimeError: If the connection is not open.
         """
-        for method_frame, header_frame, body in self._get_channel().consume(
-            queue=queue_name,
-            auto_ack=True,
-        ):
-            yield {
-                "method_frame": method_frame,
-                "header_frame": header_frame,
-                "body": body,
-            }
+        channel = self._get_channel()
+        try:
+            for method_frame, header_frame, body in channel.consume(
+                queue=queue_name,
+                auto_ack=True,
+            ):
+                if method_frame is None:
+                    break
+                yield {
+                    "method_frame": method_frame,
+                    "header_frame": header_frame,
+                    "body": body,
+                }
+        finally:
+            channel.cancel()
