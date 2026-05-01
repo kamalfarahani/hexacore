@@ -32,9 +32,9 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
             repository (SQLAlchemyRepository[M]): The repository.
             session_factory (SessionFactory): The session factory.
         """
+        self._session = None
         self._session_factory = session_factory
         self._repo_factory = repo_factory
-        self._session: Session | None = None
 
     @property
     def session(self) -> Session:
