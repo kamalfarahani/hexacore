@@ -1,3 +1,6 @@
+import json
+from typing import Generator
+
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.connection import Parameters
@@ -149,3 +152,55 @@ class RabbitMQConnection(BaseBrokerConnection):
             exchange=exchange_name,
             routing_key=routing_key,
         )
+
+    def publish(
+        self,
+        exchange_name: str,
+        routing_key: str,
+        data: dict,
+    ) -> None:
+        """
+        Publish data to a queue.
+
+        Args:
+            exchange_name (str): The name of the exchange to publish to.
+            routing_key (str): The routing key for the message.
+            data (dict): The data to publish.
+
+        Side Effects:
+            Publishes the data to the specified queue.
+
+        Raises:
+            RuntimeError: If the connection is not open.
+        """
+        self._get_channel().basic_publish(
+            exchange=exchange_name,
+            routing_key=routing_key,
+            body=json.dumps(data),
+        )
+
+    def consume(
+        self,
+        queue_name: str,
+    ) -> Generator[dict, None, None]:
+        """
+        Consume messages from a queue.
+
+        Args:
+            queue_name (str): The name of the queue to consume from.
+
+        Yields:
+            dict: The consumed message containing method_frame, header_frame, and body.
+
+        Raises:
+            RuntimeError: If the connection is not open.
+        """
+        for method_frame, header_frame, body in self._get_channel().consume(
+            queue=queue_name,
+            auto_ack=True,
+        ):
+            yield {
+                "method_frame": method_frame,
+                "header_frame": header_frame,
+                "body": body,
+            }
