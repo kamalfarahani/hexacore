@@ -11,10 +11,21 @@ type MaybeRabbitMQConnectionPair = tuple[BlockingConnection, BlockingChannel] | 
 
 
 class RabbitMQConnection(BaseBrokerConnection):
-    """
-    This class is a wrapper around the RabbitMQ connection and channel.
-    It provides a simple interface for declaring queues and exchanges,
-    and for binding queues to exchanges.
+    """RabbitMQ connection manager for message broker operations.
+
+    This class provides a high-level interface for managing RabbitMQ connections,
+    including queue and exchange management, message publishing, and consumption.
+
+    Attributes:
+        _parameters: The connection parameters for the RabbitMQ server.
+        _connection_pair: A tuple of (connection, channel) or None if not connected.
+
+    Example:
+        >>> from pika import ConnectionParameters
+        >>> conn = RabbitMQConnection(ConnectionParameters('localhost'))
+        >>> with conn:
+        ...     conn.create_queue('my_queue')
+        ...     conn.publish('my_exchange', 'my_routing_key', {'key': 'value'})
     """
 
     _parameters: Parameters
