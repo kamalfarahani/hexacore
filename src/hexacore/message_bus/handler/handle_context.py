@@ -3,7 +3,7 @@ from typing import Protocol
 
 from pydantic import BaseModel
 
-from hexacore.event_publisher import BaseEventPublisher
+from hexacore.broker import BaseBrokerConnection
 from hexacore.unit_of_work import BaseUnitOfWork
 
 
@@ -32,4 +32,4 @@ class HandleContext:
     """
 
     unit_of_work_factory: BaseUnitOfWorkFactory
-    event_publisher: BaseEventPublisher
+    broker_connection: BaseBrokerConnection
