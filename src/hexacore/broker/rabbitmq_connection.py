@@ -2,15 +2,20 @@ from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.connection import Parameters
 
+from .base_broker_connection import BaseBrokerConnection
+
 type MaybeRabbitMQConnectionPair = tuple[BlockingConnection, BlockingChannel] | None
 
 
-class RabbitMQConnection:
+class RabbitMQConnection(BaseBrokerConnection):
     """
     This class is a wrapper around the RabbitMQ connection and channel.
     It provides a simple interface for declaring queues and exchanges,
     and for binding queues to exchanges.
     """
+
+    _parameters: Parameters
+    _connection_pair: MaybeRabbitMQConnectionPair
 
     def __init__(self, parameters: Parameters) -> None:
         """
@@ -19,8 +24,23 @@ class RabbitMQConnection:
         Args:
             parameters (Parameters): The connection parameters for the RabbitMQ server.
         """
-        self.parameters = parameters
-        self.connection_pair: MaybeRabbitMQConnectionPair = None
+        self._parameters = parameters
+        self._connection_pair = None
+
+    def _get_channel(self) -> BlockingChannel:
+        """
+        Get the channel from the connection pair.
+
+        Returns:
+            BlockingChannel: The channel from the connection pair.
+
+        Raises:
+            RuntimeError: If the connection is not open.
+        """
+        if self._connection_pair is None:
+            raise RuntimeError("Connection is not open. Call open() first.")
+        _, channel = self._connection_pair
+        return channel
 
     def open(self) -> None:
         """
@@ -28,10 +48,15 @@ class RabbitMQConnection:
 
         Side Effects:
             Opens the connection and channel.
+
+        Raises:
+            RuntimeError: If the connection is already open.
         """
-        connection = BlockingConnection(self.parameters)
+        if self._connection_pair is not None:
+            raise RuntimeError("Connection is already open. Call close() first.")
+        connection = BlockingConnection(self._parameters)
         channel = connection.channel()
-        self.connection_pair = (connection, channel)
+        self._connection_pair = (connection, channel)
 
     def close(self) -> None:
         """
@@ -40,10 +65,11 @@ class RabbitMQConnection:
         Side Effects:
             Closes the connection and channel.
         """
-        match self.connection_pair:
+        match self._connection_pair:
             case (connection, channel):
                 channel.close()
                 connection.close()
+                self._connection_pair = None
             case _:
                 pass
 
@@ -61,12 +87,14 @@ class RabbitMQConnection:
 
         Side Effects:
             Declares the queue on the RabbitMQ server.
-        """
-        if self.connection_pair is None:
-            raise RuntimeError("Connection is not open. Call open() first.")
 
-        _, channel = self.connection_pair
-        channel.queue_declare(queue=queue_name, durable=durable)
+        Raises:
+            RuntimeError: If the connection is not open.
+        """
+        self._get_channel().queue_declare(
+            queue=queue_name,
+            durable=durable,
+        )
 
     def create_exchange(
         self,
@@ -84,20 +112,21 @@ class RabbitMQConnection:
 
         Side Effects:
             Declares the exchange on the RabbitMQ server.
-        """
-        if self.connection_pair is None:
-            raise RuntimeError("Connection is not open. Call open() first.")
 
-        _, channel = self.connection_pair
-        channel.exchange_declare(
-            exchange=exchange_name, exchange_type=exchange_type, durable=durable
+        Raises:
+            RuntimeError: If the connection is not open.
+        """
+        self._get_channel().exchange_declare(
+            exchange=exchange_name,
+            exchange_type=exchange_type,
+            durable=durable,
         )
 
     def bind_queue(
         self,
         queue_name: str,
         exchange_name: str,
-        routing_key: str = "",
+        routing_key: str,
     ) -> None:
         """
         Bind a queue to an exchange with a routing key.
@@ -106,15 +135,16 @@ class RabbitMQConnection:
             queue_name (str): The name of the queue to bind.
             exchange_name (str): The name of the exchange to bind to.
             routing_key (str): The routing key for the binding.
+                Pass "" explicitly for fanout exchanges
+                where routing keys are ignored.
 
         Side Effects:
             Binds the queue to the exchange on the RabbitMQ server.
-        """
-        if self.connection_pair is None:
-            raise RuntimeError("Connection is not open. Call open() first.")
 
-        _, channel = self.connection_pair
-        channel.queue_bind(
+        Raises:
+            RuntimeError: If the connection is not open.
+        """
+        self._get_channel().queue_bind(
             queue=queue_name,
             exchange=exchange_name,
             routing_key=routing_key,
