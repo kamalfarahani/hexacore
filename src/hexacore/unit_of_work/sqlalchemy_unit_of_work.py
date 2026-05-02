@@ -67,7 +67,7 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
         Side effects:
             - Initializes the database session.
         """
-        self._session: Session = self._session_factory()
+        self._session = self._session_factory()
 
     def done(self) -> None:
         """
