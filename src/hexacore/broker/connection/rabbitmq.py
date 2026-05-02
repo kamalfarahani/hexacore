@@ -213,6 +213,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         Raises:
             ConsumeError: If there is an error consuming from the queue.
         """
+        channel = None
         try:
             channel = self._get_channel()
             for method_frame, header_frame, body in channel.consume(
@@ -231,4 +232,5 @@ class RabbitMQConnection(BaseBrokerConnection):
                 f"Failed to consume from queue '{queue_name}': {e}"
             ) from e
         finally:
-            channel.cancel()
+            if channel is not None:
+                channel.cancel()
