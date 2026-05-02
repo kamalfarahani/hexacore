@@ -3,7 +3,5 @@ from .repository import BaseRepository
 
 __all__ = [
     "BaseDBPromise",
-    "NotFoundError",
-    "PromiseNotReadyError",
     "BaseRepository",
 ]
