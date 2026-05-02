@@ -20,6 +20,15 @@ class ModelORM[M: BaseModel](DeclarativeBase):
         """
         self.model = model
 
+    def get_id(self) -> int:
+        """
+        Get the ID of the ORM model.
+
+        Returns:
+            int: The ID of the ORM model.
+        """
+        return self.id
+
     @staticmethod
     def from_model(
         model: M,
