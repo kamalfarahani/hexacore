@@ -1,20 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Protocol
 
 from katharos.ds import Result
 from pydantic import BaseModel
 
 from hexacore.repository.exceptions import NotFoundError, PromiseNotReadyError
 
-
-class WithID[M: BaseModel](Protocol):
-    """
-    Protocol for objects that have an ID.
-    """
-
-    def get_id(self) -> int: ...
-
-    def get_model(self) -> M: ...
+from .with_id import WithID
 
 
 class BaseDBPromise[M: BaseModel](ABC):
