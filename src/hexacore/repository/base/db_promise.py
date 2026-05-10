@@ -1,15 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import Protocol
 
+from katharos.ds import Result
 from pydantic import BaseModel
 
+from hexacore.repository.exceptions import NotFoundError, PromiseNotReadyError
 
-class WithID(Protocol):
+
+class WithID[M: BaseModel](Protocol):
     """
     Protocol for objects that have an ID.
     """
 
     def get_id(self) -> int: ...
+
+    def get_model(self) -> M: ...
 
 
 class BaseDBPromise[M: BaseModel](ABC):
@@ -20,15 +25,12 @@ class BaseDBPromise[M: BaseModel](ABC):
 
     @property
     @abstractmethod
-    def value(self) -> M:
+    def value(self) -> Result[NotFoundError, M]:
         """
         Get the value of the promise.
 
         Returns:
-            M: The value of the promise.
-
-        Raises:
-            NotFoundError: If the value is not found in the database.
+            Result[NotFoundError, M]: The value of the promise, or an error if not found.
         """
         raise NotImplementedError()
 
@@ -45,14 +47,12 @@ class BaseDBPromise[M: BaseModel](ABC):
 
     @property
     @abstractmethod
-    def result(self) -> WithID:
+    def result(self) -> Result[PromiseNotReadyError, WithID[M]]:
         """
         Get the result of the promise.
 
         Returns:
-            WithID: The result of the promise.
-
-        Raises:
-            PromiseNotReadyError: If the promise is not ready yet.
+            Result[PromiseNotReadyError, WithID[M]]: The result of the promise,
+                or an error if the promise is not ready.
         """
         raise NotImplementedError()
