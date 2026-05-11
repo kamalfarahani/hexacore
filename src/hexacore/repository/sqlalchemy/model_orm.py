@@ -11,15 +11,6 @@ class ModelORM[M: BaseModel](DeclarativeBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
-    def __init__(self, model: M) -> None:
-        """
-        Initialize the ORM model from a domain model.
-
-        Args:
-            model (M): The domain model.
-        """
-        self.model = model
-
     @staticmethod
     def from_model(
         model: M,
