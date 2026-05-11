@@ -49,7 +49,7 @@ class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
                 NotFoundError("Value not found in the database")
             )
 
-        return Result[NotFoundError, M].Success(self.with_id.model_orm.model)
+        return Result[NotFoundError, M].Success(self.with_id.get_model())
 
     @property
     def ready(self) -> bool:
