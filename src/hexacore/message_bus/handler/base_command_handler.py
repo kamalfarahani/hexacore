@@ -23,7 +23,7 @@ class BaseCommandHandler[Command: BaseCommand](ABC):
             services available during command handling.
     """
 
-    def __init__(self, handle_context: HandleContext):
+    def __init__(self, handle_context: HandleContext) -> None:
         """
         Initialize the command handler with a handle context.
 

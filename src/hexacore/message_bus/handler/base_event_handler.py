@@ -22,7 +22,7 @@ class BaseEventHandler[Event: BaseEvent](ABC):
             services available during event handling.
     """
 
-    def __init__(self, handle_context: HandleContext):
+    def __init__(self, handle_context: HandleContext) -> None:
         """
         Initialize the event handler with a handle context.
 
