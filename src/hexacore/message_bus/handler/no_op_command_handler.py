@@ -1,5 +1,7 @@
 import logging
 
+from katharos.ds import ImmutableList
+
 from hexacore.command import BaseCommand
 from hexacore.event import BaseEvent
 
@@ -16,7 +18,7 @@ class NoOpCommandHandler(BaseCommandHandler):
     This can be used as a default handler for commands that do not have a specific handler registered.
     """
 
-    def handle(self, command: BaseCommand) -> tuple[None, list[BaseEvent]]:
+    def handle(self, command: BaseCommand) -> tuple[None, ImmutableList[BaseEvent]]:
         """
         Handle a command that has no operation.
 
@@ -27,4 +29,4 @@ class NoOpCommandHandler(BaseCommandHandler):
             A tuple containing the result of the command handling and a list of events.
         """
         logger.warning("No operation for command: %s", command)
-        return None, []
+        return None, ImmutableList([])

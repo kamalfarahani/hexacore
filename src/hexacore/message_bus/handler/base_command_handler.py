@@ -1,17 +1,26 @@
 from abc import ABC, abstractmethod
-from typing import Any
+
+from katharos.ds import ImmutableList
 
 from hexacore.command import BaseCommand
 from hexacore.event import BaseEvent
 
 from .handle_context import HandleContext
 
-type CommandResult = tuple[Any, list[BaseEvent]]
-
 
 class BaseCommandHandler[Command: BaseCommand](ABC):
     """
     Abstract base class for command handlers in the message bus.
+
+    Subclasses must implement the handle method to process a specific
+    command type and return the resulting domain events.
+
+    Type Args:
+        Command: A BaseCommand subtype representing the command this handler processes.
+
+    Attributes:
+        handle_context: The context object providing shared resources and
+            services available during command handling.
     """
 
     def __init__(self, handle_context: HandleContext):
@@ -19,31 +28,34 @@ class BaseCommandHandler[Command: BaseCommand](ABC):
         Initialize the command handler with a handle context.
 
         Args:
-            handle_context: The handle context to use for handling commands.
+            handle_context: The context object providing shared resources and
+                services available during command handling.
         """
         self.handle_context = handle_context
 
     @abstractmethod
-    def handle(self, command: Command) -> CommandResult:
+    def handle(self, command: Command) -> ImmutableList[BaseEvent]:
         """
-        Handle a command and return the result.
+        Handle the given command and return the resulting domain events.
 
         Args:
-            command: The command to handle.
+            command: The command instance to handle.
 
         Returns:
-            The result of the command handling.
+            An immutable list of domain events produced as a result of handling
+            the command.
         """
         raise NotImplementedError()
 
-    def __call__(self, command: Command) -> CommandResult:
+    def __call__(self, command: Command) -> ImmutableList[BaseEvent]:
         """
-        Call the handler to process a command.
+        Make the handler callable, delegating to handle.
 
         Args:
-            command: The command to handle.
+            command: The command instance to handle.
 
         Returns:
-            The result of the command handling.
+            An immutable list of domain events produced as a result of handling
+            the command.
         """
         return self.handle(command)
