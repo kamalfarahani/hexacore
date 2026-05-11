@@ -49,8 +49,7 @@ class BaseMessageBus(ABC):
             message = messages.pop(0)
             match message:
                 case BaseCommand():
-                    events = self.handle_command(message)
-                    messages.extend(events)
+                    messages.extend(self.handle_command(message))
                 case BaseEvent():
                     messages.extend(self.handle_event(message))
 
