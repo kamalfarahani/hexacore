@@ -18,7 +18,7 @@ class NoOpCommandHandler(BaseCommandHandler):
     This can be used as a default handler for commands that do not have a specific handler registered.
     """
 
-    def handle(self, command: BaseCommand) -> tuple[None, ImmutableList[BaseEvent]]:
+    def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
         """
         Handle a command that has no operation.
 
@@ -26,7 +26,7 @@ class NoOpCommandHandler(BaseCommandHandler):
             command: The command to handle.
 
         Returns:
-            A tuple containing the result of the command handling and a list of events.
+            An empty immutable list
         """
         logger.warning("No operation for command: %s", command)
-        return None, ImmutableList([])
+        return ImmutableList([])
