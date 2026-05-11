@@ -1,0 +1,136 @@
+import pytest
+from pydantic import BaseModel
+
+from hexacore.repository.exceptions import NotFoundError, PromiseNotReadyError
+from hexacore.repository.sqlalchemy.db_promise import SQLAlchemyDBPromise
+from hexacore.repository.sqlalchemy.with_id import SQLAlchemyWithID
+
+
+class FakeModel(BaseModel):
+    name: str
+    age: int
+
+
+class FakeWithID(SQLAlchemyWithID[FakeModel]):
+    """A fake SQLAlchemyWithID that does not require a real ORM model.
+
+    It bypasses the parent ``__init__`` so tests don't need a SQLAlchemy
+    session or declarative-mapped instance.
+    """
+
+    def __init__(self, *, id: int | None, model: FakeModel) -> None:
+        self._id = id
+        self._model = model
+
+    def get_id(self) -> int:
+        # The base interface promises ``int``; tests that need to simulate an
+        # un-persisted entity use ``id=None`` and assert via the promise's
+        # ``ready`` / ``result`` properties without calling get_id directly.
+        return self._id  # type: ignore[return-value]
+
+    def get_model(self) -> FakeModel:
+        return self._model
+
+
+@pytest.fixture
+def model() -> FakeModel:
+    return FakeModel(name="alice", age=30)
+
+
+@pytest.fixture
+def persisted_with_id(model: FakeModel) -> FakeWithID:
+    return FakeWithID(id=42, model=model)
+
+
+@pytest.fixture
+def unpersisted_with_id(model: FakeModel) -> FakeWithID:
+    return FakeWithID(id=None, model=model)
+
+
+class TestValue:
+    def test_returns_success_with_model_when_with_id_is_set(
+        self, persisted_with_id: FakeWithID, model: FakeModel
+    ) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](persisted_with_id)
+
+        result = promise.value
+
+        assert result.is_success()
+        assert result.value is model
+
+    def test_returns_success_when_unpersisted_but_with_id_present(
+        self, unpersisted_with_id: FakeWithID, model: FakeModel
+    ) -> None:
+        # value cares about presence of with_id, not whether it has an id.
+        promise = SQLAlchemyDBPromise[FakeModel](unpersisted_with_id)
+
+        result = promise.value
+
+        assert result.is_success()
+        assert result.value is model
+
+    def test_returns_failure_with_not_found_when_with_id_is_none(self) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](None)
+
+        result = promise.value
+
+        assert result.is_failure()
+        assert isinstance(result.error, NotFoundError)
+
+
+class TestReady:
+    def test_ready_is_true_when_with_id_has_id(
+        self, persisted_with_id: FakeWithID
+    ) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](persisted_with_id)
+        assert promise.ready is True
+
+    def test_ready_is_false_when_with_id_id_is_none(
+        self, unpersisted_with_id: FakeWithID
+    ) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](unpersisted_with_id)
+        assert promise.ready is False
+
+    def test_ready_is_false_when_with_id_is_none(self) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](None)
+        assert promise.ready is False
+
+
+class TestResult:
+    def test_returns_success_with_with_id_when_ready(
+        self, persisted_with_id: FakeWithID
+    ) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](persisted_with_id)
+
+        result = promise.result
+
+        assert result.is_success()
+        assert result.value is persisted_with_id
+
+    def test_returns_failure_when_with_id_is_none(self) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](None)
+
+        result = promise.result
+
+        assert result.is_failure()
+        assert isinstance(result.error, PromiseNotReadyError)
+
+    def test_returns_failure_when_with_id_has_no_id(
+        self, unpersisted_with_id: FakeWithID
+    ) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](unpersisted_with_id)
+
+        result = promise.result
+
+        assert result.is_failure()
+        assert isinstance(result.error, PromiseNotReadyError)
+
+
+class TestInit:
+    def test_stores_with_id(self, persisted_with_id: FakeWithID) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](persisted_with_id)
+        assert promise.with_id is persisted_with_id
+
+    def test_accepts_none(self) -> None:
+        promise = SQLAlchemyDBPromise[FakeModel](None)
+        assert promise.with_id is None
