@@ -30,3 +30,12 @@ class SQLAlchemyWithID[M: BaseModel](WithID[M]):
             int: The ID of the model.
         """
         return self.model_orm.id
+
+    def get_model(self) -> M:
+        """
+        Get the domain model associated with this ID.
+
+        Returns:
+            M: The domain model associated with this ID.
+        """
+        return self.model_orm.model
