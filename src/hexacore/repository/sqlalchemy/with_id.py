@@ -16,7 +16,6 @@ class SQLAlchemyWithID[M: BaseModel](WithID[M]):
     def __init__(
         self,
         model_orm: ModelORM[M],
-        model: M,
     ) -> None:
         """
         Initialize the SQLAlchemy WithID wrapper.
@@ -26,14 +25,13 @@ class SQLAlchemyWithID[M: BaseModel](WithID[M]):
             model (M): The domain model instance.
         """
         self.model_orm = model_orm
-        self.model = model
 
-    def get_id(self) -> int:
+    def get_id(self) -> int | None:
         """
         Get the ID of the model.
 
         Returns:
-            int: The ID of the model.
+            int | None: The ID of the model or None if not set.
         """
         return self.model_orm.id
 
@@ -44,4 +42,4 @@ class SQLAlchemyWithID[M: BaseModel](WithID[M]):
         Returns:
             M: The domain model associated with this ID.
         """
-        return self.model
+        return self.model_orm.to_model()
