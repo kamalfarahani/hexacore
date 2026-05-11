@@ -5,6 +5,7 @@ from hexacore.repository.base import BaseRepository
 
 from .db_promise import SQLAlchemyDBPromise
 from .model_orm import ModelORM
+from .with_id import SQLAlchemyWithID
 
 
 class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
@@ -46,7 +47,7 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
         )
         self._session.add(model_orm)
 
-        return SQLAlchemyDBPromise(model_orm)
+        return SQLAlchemyDBPromise(SQLAlchemyWithID(model_orm))
 
     def get(self, id: int) -> SQLAlchemyDBPromise[M]:
         """
@@ -63,7 +64,10 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
             id,
         )
 
-        return SQLAlchemyDBPromise(model_orm)
+        if model_orm is not None:
+            return SQLAlchemyDBPromise(SQLAlchemyWithID(model_orm))
+        else:
+            return SQLAlchemyDBPromise(None)
 
     def update(self, model: M, id: int) -> SQLAlchemyDBPromise[M]:
         """
@@ -81,15 +85,16 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
             id,
         )
 
-        if model_orm:
+        if model_orm is not None:
             updated_model_orm = self._ModelORMClass.from_model(
                 model,
                 self._session,
             )
             updated_model_orm.id = id
             self._session.merge(updated_model_orm)
-
-        return SQLAlchemyDBPromise(model_orm)
+            return SQLAlchemyDBPromise(SQLAlchemyWithID(updated_model_orm))
+        else:
+            return SQLAlchemyDBPromise(None)
 
     def delete(self, id: int) -> SQLAlchemyDBPromise[M]:
         """
@@ -106,7 +111,8 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
             id,
         )
 
-        if model_orm:
+        if model_orm is not None:
             self._session.delete(model_orm)
-
-        return SQLAlchemyDBPromise(model_orm)
+            return SQLAlchemyDBPromise(SQLAlchemyWithID(model_orm))
+        else:
+            return SQLAlchemyDBPromise(None)
