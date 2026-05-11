@@ -1,15 +1,12 @@
 from abc import ABC
-from typing import Any
 
+from katharos.ds import ImmutableList
 from toolz import concat
 
 from hexacore.command import BaseCommand
 from hexacore.event import BaseEvent
 
-from .handler import (
-    CommandResult,
-    HandleContext,
-)
+from .handler import HandleContext
 from .registry import CommandRegistry, EventRegistry
 
 
@@ -40,31 +37,24 @@ class BaseMessageBus(ABC):
         self._command_registry = command_registry
         self._event_registry = event_registry
 
-    def handle(self, message: BaseCommand | BaseEvent) -> list[Any]:
+    def handle(self, message: BaseCommand | BaseEvent) -> None:
         """
         Handle a message
 
         Args:
             message (BaseCommand | BaseEvent): The message to handle
-
-        Returns:
-            list[Any]: The results of the message handling
         """
         messages = [message]
-        results = []
         while messages:
             message = messages.pop(0)
             match message:
                 case BaseCommand():
-                    result, events = self.handle_command(message)
+                    events = self.handle_command(message)
                     messages.extend(events)
-                    results.append(result)
                 case BaseEvent():
                     messages.extend(self.handle_event(message))
 
-        return results
-
-    def handle_command(self, command: BaseCommand) -> CommandResult:
+    def handle_command(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
         """
         Handle a command
 
@@ -72,12 +62,12 @@ class BaseMessageBus(ABC):
             command (BaseCommand): The command to handle
 
         Returns:
-            CommandResult: The result of the command handling
+            ImmutableList[BaseEvent]: The events resulting from the command handling
         """
         handler = self._command_registry[type(command)]
-        return handler(command)
+        return handler.handle(command)
 
-    def handle_event(self, event: BaseEvent) -> list[BaseEvent]:
+    def handle_event(self, event: BaseEvent) -> ImmutableList[BaseEvent]:
         """
         Handle an event
 
@@ -85,10 +75,10 @@ class BaseMessageBus(ABC):
             event (BaseEvent): The event to handle
 
         Returns:
-            list[BaseEvent]: The events resulting from the event handling
+            ImmutableList[BaseEvent]: The events resulting from the event handling
         """
         handlers = self._event_registry[type(event)]
-        return list(
+        return ImmutableList(
             concat(
                 [
                     handler(
