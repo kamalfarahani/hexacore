@@ -33,23 +33,12 @@ class BaseDBPromise[M: BaseModel](ABC):
 
     @property
     @abstractmethod
-    def ready(self) -> bool:
-        """
-        Check if the promise is ready.
-
-        Returns:
-            ``True`` if the database has assigned an ID, ``False`` otherwise.
-        """
-        raise NotImplementedError()
-
-    @property
-    @abstractmethod
-    def result(self) -> Result[PromiseNotReadyError, WithID[M]]:
+    def result(self) -> Result[Exception, WithID[M]]:
         """
         Get the result of the promise.
 
         Returns:
-            The ``WithID`` wrapper in a ``Result``, or a ``PromiseNotReadyError``
-            failure if the promise is not yet ready.
+            The ``WithID`` wrapper in a ``Result``, or an ``Exception``
+            failure if the entity was not found or an error occurred.
         """
         raise NotImplementedError()

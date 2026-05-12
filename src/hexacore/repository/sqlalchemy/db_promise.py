@@ -59,37 +59,28 @@ class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
         return Result[Exception, M].Success(self.with_id.get_model())
 
     @property
-    def ready(self) -> bool:
-        """
-        Check if the promise is ready.
-
-        Returns:
-            ``True`` if the entity has a database-assigned ID, ``False``
-            otherwise.
-        """
-        if self.with_id is None:
-            return False
-
-        if self.with_id.get_id() is not None:
-            return True
-
-        return False
-
-    @property
-    def result(self) -> Result[PromiseNotReadyError, SQLAlchemyWithID[M]]:
+    def result(self) -> Result[Exception, SQLAlchemyWithID[M]]:
         """
         Get the result of the promise.
 
         Returns:
-            The ``SQLAlchemyWithID`` wrapper in a ``Result``, or a
-            ``PromiseNotReadyError`` failure if the promise is not ready.
+            The ``SQLAlchemyWithID`` wrapper in a ``Result``, or an ``Exception``
+            failure if the entity was not found or an error occurred.
         """
-        if not self.ready:
-            return Result[PromiseNotReadyError, SQLAlchemyWithID[M]].Failure(
-                PromiseNotReadyError("DBPromise is not ready")
+        if self.error:
+            return Result[Exception, SQLAlchemyWithID[M]].Failure(self.error)
+
+        if self.with_id is None:
+            return Result[Exception, SQLAlchemyWithID[M]].Failure(
+                NotFoundError("Value not found in the database")
             )
 
-        # this is safe because we checked ready above, this line is only for type checker
-        assert self.with_id is not None
+        try:
+            if self.with_id.get_id() is None:
+                return Result[Exception, SQLAlchemyWithID[M]].Failure(
+                    PromiseNotReadyError("DBPromise is not ready")
+                )
+        except Exception as e:
+            return Result[Exception, SQLAlchemyWithID[M]].Failure(e)
 
-        return Result[PromiseNotReadyError, SQLAlchemyWithID[M]].Success(self.with_id)
+        return Result[Exception, SQLAlchemyWithID[M]].Success(self.with_id)
