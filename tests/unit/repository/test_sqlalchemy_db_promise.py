@@ -51,24 +51,6 @@ class TestValue:
         assert isinstance(result.error, NotFoundError)
 
 
-class TestReady:
-    def test_ready_is_true_when_with_id_has_id(
-        self, persisted_with_id: FakeWithID
-    ) -> None:
-        promise = SQLAlchemyDBPromise[FakeModel](persisted_with_id)
-        assert promise.ready is True
-
-    def test_ready_is_false_when_with_id_id_is_none(
-        self, unpersisted_with_id: FakeWithID
-    ) -> None:
-        promise = SQLAlchemyDBPromise[FakeModel](unpersisted_with_id)
-        assert promise.ready is False
-
-    def test_ready_is_false_when_with_id_is_none(self) -> None:
-        promise = SQLAlchemyDBPromise[FakeModel](None)
-        assert promise.ready is False
-
-
 class TestResult:
     def test_returns_success_with_with_id_when_ready(
         self, persisted_with_id: FakeWithID
@@ -86,7 +68,7 @@ class TestResult:
         result = promise.result
 
         assert result.is_failure()
-        assert isinstance(result.error, PromiseNotReadyError)
+        assert isinstance(result.error, NotFoundError)
 
     def test_returns_failure_when_with_id_has_no_id(
         self, unpersisted_with_id: FakeWithID

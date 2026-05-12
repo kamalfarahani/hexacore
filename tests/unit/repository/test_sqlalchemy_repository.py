@@ -78,7 +78,8 @@ class TestAdd:
         promise = repository.add(model)
 
         # The session has not been flushed, so the autoincrement ID is unset.
-        assert promise.ready is False
+        assert promise.result.is_failure()
+        assert isinstance(promise.result.error, PromiseNotReadyError)
 
     def test_promise_becomes_ready_after_flush(
         self,
@@ -90,7 +91,6 @@ class TestAdd:
 
         session.flush()
 
-        assert promise.ready is True
         result = promise.result
         assert result.is_success()
         assert result.value.get_id() is not None
@@ -122,7 +122,7 @@ class TestGet:
 
         promise = repository.get(id_)
 
-        assert promise.ready is True
+        assert promise.result.is_success()
         result = promise.value
         assert result.is_success()
         assert result.value == model
@@ -134,7 +134,7 @@ class TestGet:
         promise = repository.get(404)
 
         assert promise.with_id is None
-        assert promise.ready is False
+        assert promise.result.is_failure()
         result = promise.value
         assert result.is_failure()
         assert isinstance(result.error, NotFoundError)
@@ -147,7 +147,7 @@ class TestGet:
 
         result = promise.result
         assert result.is_failure()
-        assert isinstance(result.error, PromiseNotReadyError)
+        assert isinstance(result.error, NotFoundError)
 
 
 class TestUpdate:
@@ -163,7 +163,7 @@ class TestUpdate:
         promise = repository.update(updated, id_)
         session.flush()
 
-        assert promise.ready is True
+        assert promise.result.is_success()
         assert promise.value.is_success()
         assert promise.value.value == updated
 
@@ -222,7 +222,7 @@ class TestDelete:
         promise = repository.delete(id_)
         session.flush()
 
-        assert promise.ready is True
+        assert promise.result.is_success()
         assert promise.value.is_success()
         assert promise.value.value == model
         assert session.get(FakeModelORM, id_) is None
@@ -272,7 +272,7 @@ class TestGetErrorHandling:
         promise = broken_repository.get(id_)
 
         assert promise.with_id is None
-        assert promise.ready is False
+        assert promise.result.is_failure()
         result = promise.value
         assert result.is_failure()
         assert isinstance(result.error, ValueError)
@@ -296,7 +296,7 @@ class TestGetErrorHandling:
 
         result = promise.result
         assert result.is_failure()
-        assert isinstance(result.error, PromiseNotReadyError)
+        assert isinstance(result.error, RuntimeError)
 
 
 class TestDeleteErrorHandling:
@@ -317,7 +317,7 @@ class TestDeleteErrorHandling:
         promise = broken_repository.delete(id_)
 
         assert promise.with_id is None
-        assert promise.ready is False
+        assert promise.result.is_failure()
         result = promise.value
         assert result.is_failure()
         assert isinstance(result.error, ValueError)
@@ -358,8 +358,8 @@ class TestMultipleRecords:
         promise2 = repository.add(model2)
         session.flush()
 
-        assert promise1.ready is True
-        assert promise2.ready is True
+        assert promise1.result.is_success()
+        assert promise2.result.is_success()
         id1 = promise1.result.value.get_id()
         id2 = promise2.result.value.get_id()
 
