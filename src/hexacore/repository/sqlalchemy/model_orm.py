@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from pydantic import BaseModel
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
@@ -28,13 +30,10 @@ class ModelORM[M: BaseModel](DeclarativeBase):
         """
         raise NotImplementedError()
 
-    @staticmethod
-    def to_model(model_orm: "ModelORM[M]") -> M:
+    @abstractmethod
+    def to_model(self) -> M:
         """
         Convert an ORM model to a domain model.
-
-        Args:
-            model_orm (ModelORM[M]): The ORM model.
 
         Returns:
             M: The domain model.

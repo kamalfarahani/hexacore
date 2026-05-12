@@ -83,8 +83,10 @@ class RabbitMQConnection(BaseBrokerConnection):
         """
         match self._connection_pair:
             case (connection, channel):
-                channel.close()
-                connection.close()
+                if channel.is_open:
+                    channel.close()
+                if connection.is_open:
+                    connection.close()
                 self._connection_pair = None
             case _:
                 pass
@@ -232,5 +234,8 @@ class RabbitMQConnection(BaseBrokerConnection):
                 f"Failed to consume from queue '{queue_name}': {e}"
             ) from e
         finally:
-            if channel is not None:
-                channel.cancel()
+            if channel is not None and channel.is_open:
+                try:
+                    channel.cancel()
+                except Exception:
+                    pass

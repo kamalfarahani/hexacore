@@ -22,3 +22,13 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 katharos = { git = "ssh://git@github.com/kamalfarahani/katharos.git", branch = "main" }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=7.1.0",
+    "testcontainers[rabbitmq]>=4.8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
