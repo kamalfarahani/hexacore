@@ -1,35 +1,8 @@
 import pytest
-from pydantic import BaseModel
-from sqlalchemy.orm import Mapped, mapped_column
 
-from hexacore.repository.sqlalchemy.model_orm import ModelORM
 from hexacore.repository.sqlalchemy.with_id import SQLAlchemyWithID
 
-
-class FakeModel(BaseModel):
-    name: str
-    age: int
-
-
-class FakeModelORM(ModelORM[FakeModel]):
-    """Concrete ORM mapping used purely for unit testing.
-
-    SQLAlchemy declarative classes are valid plain Python objects when
-    instantiated outside a session; we exploit that to avoid touching a
-    real database.
-    """
-
-    __tablename__ = "fake_model"
-
-    name: Mapped[str] = mapped_column()
-    age: Mapped[int] = mapped_column()
-
-    @staticmethod
-    def from_model(model: FakeModel, session) -> "FakeModelORM":
-        return FakeModelORM(name=model.name, age=model.age)
-
-    def to_model(self) -> FakeModel:
-        return FakeModel(name=self.name, age=self.age)
+from .fakes import FakeModel, FakeModelORM
 
 
 @pytest.fixture
