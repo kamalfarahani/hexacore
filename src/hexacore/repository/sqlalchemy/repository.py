@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from hexacore.repository.base import BaseRepository
+from hexacore.repository.exceptions import NotFoundError
 
 from .db_promise import SQLAlchemyDBPromise
 from .model_orm import ModelORM
@@ -47,7 +48,12 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
         )
         self._session.add(model_orm)
 
-        return SQLAlchemyDBPromise(SQLAlchemyWithID(model_orm))
+        return SQLAlchemyDBPromise(
+            SQLAlchemyWithID(
+                model,
+                model_orm,
+            )
+        )
 
     def get(self, id: int) -> SQLAlchemyDBPromise[M]:
         """
@@ -64,10 +70,19 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
             id,
         )
 
-        if model_orm is not None:
-            return SQLAlchemyDBPromise(SQLAlchemyWithID(model_orm))
+        try:
+            if model_orm is None:
+                raise NotFoundError(f"Model with id {id} not found")
+            model = model_orm.to_model()
+        except Exception as e:
+            return SQLAlchemyDBPromise(None, error=e)
         else:
-            return SQLAlchemyDBPromise(None)
+            return SQLAlchemyDBPromise(
+                SQLAlchemyWithID(
+                    model,
+                    model_orm,
+                )
+            )
 
     def update(self, model: M, id: int) -> SQLAlchemyDBPromise[M]:
         """
@@ -92,9 +107,17 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
             )
             updated_model_orm.id = id
             self._session.merge(updated_model_orm)
-            return SQLAlchemyDBPromise(SQLAlchemyWithID(updated_model_orm))
+            return SQLAlchemyDBPromise(
+                SQLAlchemyWithID(
+                    model,
+                    updated_model_orm,
+                )
+            )
         else:
-            return SQLAlchemyDBPromise(None)
+            return SQLAlchemyDBPromise(
+                None,
+                error=NotFoundError(f"Model with id {id} not found"),
+            )
 
     def delete(self, id: int) -> SQLAlchemyDBPromise[M]:
         """
@@ -111,8 +134,17 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
             id,
         )
 
-        if model_orm is not None:
-            self._session.delete(model_orm)
-            return SQLAlchemyDBPromise(SQLAlchemyWithID(model_orm))
+        try:
+            if model_orm is None:
+                raise NotFoundError(f"Model with id {id} not found")
+            model = model_orm.to_model()
+        except Exception as e:
+            return SQLAlchemyDBPromise(None, error=e)
         else:
-            return SQLAlchemyDBPromise(None)
+            self._session.delete(model_orm)
+            return SQLAlchemyDBPromise(
+                SQLAlchemyWithID(
+                    model,
+                    model_orm,
+                )
+            )

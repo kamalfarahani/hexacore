@@ -20,13 +20,16 @@ class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
     Attributes:
         with_id: The ``SQLAlchemyWithID`` wrapper, or ``None`` if the entity
             was not found.
+        error: The error that occurred, or ``None`` if no error occurred.
     """
 
     with_id: SQLAlchemyWithID[M] | None
+    error: Exception | None
 
     def __init__(
         self,
         with_id: SQLAlchemyWithID[M] | None,
+        error: Exception | None = None,
     ) -> None:
         """
         Initialize the promise.
@@ -34,24 +37,26 @@ class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
         Args:
             with_id: The ``SQLAlchemyWithID`` wrapper, or ``None`` if the
                 entity was not found.
+            error: The error that occurred, or ``None`` if no error occurred.
         """
         self.with_id = with_id
+        self.error = error
 
     @property
-    def value(self) -> Result[NotFoundError, M]:
+    def value(self) -> Result[Exception, M]:
         """
         Get the value of the promise.
 
         Returns:
-            The domain model in a ``Result``, or a ``NotFoundError`` failure
-            if the entity was not found.
+            The domain model in a ``Result``, or an ``Exception`` failure
+            if the entity was not found or an error occurred.
         """
         if self.with_id is None:
-            return Result[NotFoundError, M].Failure(
-                NotFoundError("Value not found in the database")
+            return Result[Exception, M].Failure(
+                self.error or NotFoundError("Value not found in the database")
             )
 
-        return Result[NotFoundError, M].Success(self.with_id.get_model())
+        return Result[Exception, M].Success(self.with_id.get_model())
 
     @property
     def ready(self) -> bool:

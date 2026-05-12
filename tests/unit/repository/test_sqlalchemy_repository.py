@@ -249,3 +249,223 @@ class TestDelete:
         session.flush()
 
         assert session.get(FakeModelORM, id_) is not None
+
+
+class TestGetErrorHandling:
+    def test_returns_promise_with_error_when_to_model_raises(
+        self,
+        session: Session,
+        repository: SQLAlchemyRepository[FakeModel],
+        model: FakeModel,
+    ) -> None:
+        """Test that get handles exceptions from to_model() gracefully."""
+        id_ = _persist(session, model)
+
+        # Create an ORM that will raise an exception when to_model is called
+        class BrokenModelORM(FakeModelORM):
+            def to_model(self) -> FakeModel:
+                raise ValueError("Database corruption")
+
+        # Replace the repository's ORM class with the broken one
+        broken_repository = SQLAlchemyRepository[FakeModel](session, BrokenModelORM)
+
+        promise = broken_repository.get(id_)
+
+        assert promise.with_id is None
+        assert promise.ready is False
+        result = promise.value
+        assert result.is_failure()
+        assert isinstance(result.error, ValueError)
+        assert str(result.error) == "Database corruption"
+
+    def test_result_failure_when_to_model_raises(
+        self,
+        session: Session,
+        repository: SQLAlchemyRepository[FakeModel],
+        model: FakeModel,
+    ) -> None:
+        """Test that result property also reflects the error from to_model()."""
+        id_ = _persist(session, model)
+
+        class BrokenModelORM(FakeModelORM):
+            def to_model(self) -> FakeModel:
+                raise RuntimeError("Unexpected error")
+
+        broken_repository = SQLAlchemyRepository[FakeModel](session, BrokenModelORM)
+        promise = broken_repository.get(id_)
+
+        result = promise.result
+        assert result.is_failure()
+        assert isinstance(result.error, PromiseNotReadyError)
+
+
+class TestDeleteErrorHandling:
+    def test_returns_promise_with_error_when_to_model_raises(
+        self,
+        session: Session,
+        repository: SQLAlchemyRepository[FakeModel],
+        model: FakeModel,
+    ) -> None:
+        """Test that delete handles exceptions from to_model() gracefully."""
+        id_ = _persist(session, model)
+
+        class BrokenModelORM(FakeModelORM):
+            def to_model(self) -> FakeModel:
+                raise ValueError("Cannot deserialize model")
+
+        broken_repository = SQLAlchemyRepository[FakeModel](session, BrokenModelORM)
+        promise = broken_repository.delete(id_)
+
+        assert promise.with_id is None
+        assert promise.ready is False
+        result = promise.value
+        assert result.is_failure()
+        assert isinstance(result.error, ValueError)
+        assert str(result.error) == "Cannot deserialize model"
+
+    def test_does_not_delete_when_to_model_raises(
+        self,
+        session: Session,
+        repository: SQLAlchemyRepository[FakeModel],
+        model: FakeModel,
+    ) -> None:
+        """Test that record is not deleted when to_model() raises an exception."""
+        id_ = _persist(session, model)
+
+        class BrokenModelORM(FakeModelORM):
+            def to_model(self) -> FakeModel:
+                raise ValueError("Cannot deserialize")
+
+        broken_repository = SQLAlchemyRepository[FakeModel](session, BrokenModelORM)
+        broken_repository.delete(id_)
+        session.flush()
+
+        # The record should still exist in the database
+        assert session.get(FakeModelORM, id_) is not None
+
+
+class TestMultipleRecords:
+    def test_adds_multiple_records(
+        self,
+        session: Session,
+        repository: SQLAlchemyRepository[FakeModel],
+    ) -> None:
+        """Test that multiple add operations work correctly."""
+        model1 = FakeModel(name="alice", age=30)
+        model2 = FakeModel(name="bob", age=25)
+
+        promise1 = repository.add(model1)
+        promise2 = repository.add(model2)
+        session.flush()
+
+        assert promise1.ready is True
+        assert promise2.ready is True
+        id1 = promise1.result.value.get_id()
+        id2 = promise2.result.value.get_id()
+
+        assert id1 != id2
+
+        records = session.query(FakeModelORM).all()
+        assert len(records) == 2
+
+    def test_gets_different_records(
+        self,
+        session: Session,
+        repository: SQLAlchemyRepository[FakeModel],
+    ) -> None:
+        """Test that get returns correct records for different IDs."""
+        model1 = FakeModel(name="alice", age=30)
+        model2 = FakeModel(name="bob", age=25)
+
+        id1 = _persist(session, model1)
+        id2 = _persist(session, model2)
+
+        promise1 = repository.get(id1)
+        promise2 = repository.get(id2)
+
+        assert promise1.value.value == model1
+        assert promise2.value.value == model2
+
+    def test_updates_correct_record(
+        self,
+        session: Session,
+        repository: SQLAlchemyRepository[FakeModel],
+    ) -> None:
+        """Test that update only affects the specified record."""
+        model1 = FakeModel(name="alice", age=30)
+        model2 = FakeModel(name="bob", age=25)
+
+        id1 = _persist(session, model1)
+        id2 = _persist(session, model2)
+
+        updated = FakeModel(name="alice_updated", age=31)
+        repository.update(updated, id1)
+        session.flush()
+
+        # Check first record was updated
+        reloaded1 = session.get(FakeModelORM, id1)
+        assert reloaded1 is not None
+        assert reloaded1.name == "alice_updated"
+        assert reloaded1.age == 31
+
+        # Check second record was not affected
+        reloaded2 = session.get(FakeModelORM, id2)
+        assert reloaded2 is not None
+        assert reloaded2.name == "bob"
+        assert reloaded2.age == 25
+
+    def test_deletes_correct_record(
+        self,
+        session: Session,
+        repository: SQLAlchemyRepository[FakeModel],
+    ) -> None:
+        """Test that delete only removes the specified record."""
+        model1 = FakeModel(name="alice", age=30)
+        model2 = FakeModel(name="bob", age=25)
+
+        id1 = _persist(session, model1)
+        id2 = _persist(session, model2)
+
+        repository.delete(id1)
+        session.flush()
+
+        assert session.get(FakeModelORM, id1) is None
+        assert session.get(FakeModelORM, id2) is not None
+
+    def test_sequence_of_operations(
+        self,
+        session: Session,
+        repository: SQLAlchemyRepository[FakeModel],
+    ) -> None:
+        """Test a realistic sequence of CRUD operations."""
+        # Add
+        model = FakeModel(name="charlie", age=35)
+        add_promise = repository.add(model)
+        session.flush()
+        id_result = add_promise.result
+        assert id_result.is_success()
+        id_ = id_result.value.get_id()
+        assert id_ is not None
+
+        # Get
+        get_promise = repository.get(id_)
+        assert get_promise.value.value == model
+
+        # Update
+        updated = FakeModel(name="charlie_updated", age=36)
+        update_promise = repository.update(updated, id_)
+        session.flush()
+        assert update_promise.value.value == updated
+
+        # Verify update
+        get_promise2 = repository.get(id_)
+        assert get_promise2.value.value.name == "charlie_updated"
+
+        # Delete
+        delete_promise = repository.delete(id_)
+        session.flush()
+        assert delete_promise.value.value == updated
+
+        # Verify deletion
+        get_promise3 = repository.get(id_)
+        assert get_promise3.with_id is None

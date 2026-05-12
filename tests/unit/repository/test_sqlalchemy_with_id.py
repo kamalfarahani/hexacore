@@ -18,7 +18,7 @@ class TestInit:
     def test_stores_model_orm_and_model(
         self, model_orm: FakeModelORM, model: FakeModel
     ) -> None:
-        with_id = SQLAlchemyWithID[FakeModel](model_orm)
+        with_id = SQLAlchemyWithID[FakeModel](model, model_orm)
 
         assert with_id.model_orm is model_orm
         assert with_id.get_model() == model
@@ -26,14 +26,14 @@ class TestInit:
 
 class TestGetId:
     def test_returns_orm_id(self, model_orm: FakeModelORM, model: FakeModel) -> None:
-        with_id = SQLAlchemyWithID[FakeModel](model_orm)
+        with_id = SQLAlchemyWithID[FakeModel](model, model_orm)
 
         assert with_id.get_id() == 7
 
     def test_reflects_id_changes_on_orm(
         self, model_orm: FakeModelORM, model: FakeModel
     ) -> None:
-        with_id = SQLAlchemyWithID[FakeModel](model_orm)
+        with_id = SQLAlchemyWithID[FakeModel](model, model_orm)
 
         model_orm.id = 99
 
@@ -42,7 +42,7 @@ class TestGetId:
     def test_returns_none_when_orm_has_no_id(self, model: FakeModel) -> None:
         # Simulates an un-flushed ORM instance whose primary key is unset.
         orm = FakeModelORM(name=model.name, age=model.age)
-        with_id = SQLAlchemyWithID[FakeModel](orm)
+        with_id = SQLAlchemyWithID[FakeModel](model, orm)
 
         assert with_id.get_id() is None
 
@@ -53,6 +53,6 @@ class TestGetModel:
         model_orm: FakeModelORM,
         model: FakeModel,
     ) -> None:
-        with_id = SQLAlchemyWithID[FakeModel](model_orm)
+        with_id = SQLAlchemyWithID[FakeModel](model, model_orm)
 
         assert with_id.get_model() == model
