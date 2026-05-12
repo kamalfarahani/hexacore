@@ -1,5 +1,3 @@
-from abc import ABC
-
 from katharos.ds import ImmutableList
 from toolz import concat
 
@@ -10,9 +8,9 @@ from .handler import HandleContext
 from .registry import CommandRegistry, EventRegistry
 
 
-class BaseMessageBus(ABC):
+class BaseMessageBus:
     """
-    Abstract base class for a message bus that handles commands and events.
+    Base message bus implementation.
     """
 
     _handle_context: HandleContext
