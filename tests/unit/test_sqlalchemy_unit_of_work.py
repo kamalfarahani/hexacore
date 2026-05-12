@@ -70,9 +70,7 @@ def uow(
 
 
 class TestInit:
-    def test_session_starts_as_none(
-        self, uow: SQLAlchemyUnitOfWork[FakeModel]
-    ) -> None:
+    def test_session_starts_as_none(self, uow: SQLAlchemyUnitOfWork[FakeModel]) -> None:
         assert uow._session is None
 
     def test_does_not_call_factories(
@@ -183,9 +181,7 @@ class TestDone:
         # on the underlying transaction; closed sessions have no transaction.
         assert session.in_transaction() is False
 
-    def test_safe_when_no_session(
-        self, uow: SQLAlchemyUnitOfWork[FakeModel]
-    ) -> None:
+    def test_safe_when_no_session(self, uow: SQLAlchemyUnitOfWork[FakeModel]) -> None:
         # Should not raise and should not create a session.
         uow.done()
 
@@ -223,9 +219,7 @@ class TestCommit:
             assert rows[0].name == "alice"
             assert rows[0].age == 30
 
-    def test_safe_when_no_session(
-        self, uow: SQLAlchemyUnitOfWork[FakeModel]
-    ) -> None:
+    def test_safe_when_no_session(self, uow: SQLAlchemyUnitOfWork[FakeModel]) -> None:
         # Should be a no-op rather than raising.
         uow.commit()
 
@@ -248,9 +242,7 @@ class TestRollback:
         with Session(engine) as verifier:
             assert verifier.query(FakeModelORM).count() == 0
 
-    def test_safe_when_no_session(
-        self, uow: SQLAlchemyUnitOfWork[FakeModel]
-    ) -> None:
+    def test_safe_when_no_session(self, uow: SQLAlchemyUnitOfWork[FakeModel]) -> None:
         uow.rollback()
 
         assert uow._session is None
