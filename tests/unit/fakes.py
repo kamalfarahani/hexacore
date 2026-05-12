@@ -1,6 +1,36 @@
 from typing import Generator
 
+from pydantic import BaseModel
+from sqlalchemy.orm import Mapped, Session, mapped_column
+
 from hexacore.broker.connection.base import BaseBrokerConnection
+from hexacore.repository.sqlalchemy.model_orm import ModelORM
+
+
+class FakeModel(BaseModel):
+    name: str
+    age: int
+
+
+class FakeModelORM(ModelORM[FakeModel]):
+    """Concrete ORM mapping backed by a real in-memory SQLite database.
+
+    Using a real (but in-memory) database is preferable to mocking the
+    SQLAlchemy ``Session``: the tests exercise the actual ``add`` / ``get``
+    / ``merge`` / ``delete`` behavior the repository depends on.
+    """
+
+    __tablename__ = "fake_model"
+
+    name: Mapped[str] = mapped_column()
+    age: Mapped[int] = mapped_column()
+
+    @staticmethod
+    def from_model(model: FakeModel, session: Session) -> "FakeModelORM":
+        return FakeModelORM(name=model.name, age=model.age)
+
+    def to_model(self) -> FakeModel:
+        return FakeModel(name=self.name, age=self.age)
 
 
 class FakeBrokerConnection(BaseBrokerConnection):
