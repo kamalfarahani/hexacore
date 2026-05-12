@@ -6,8 +6,7 @@ from hexacore.repository.exceptions import NotFoundError, PromiseNotReadyError
 from hexacore.repository.sqlalchemy.db_promise import SQLAlchemyDBPromise
 from hexacore.repository.sqlalchemy.repository import SQLAlchemyRepository
 from hexacore.repository.sqlalchemy.with_id import SQLAlchemyWithID
-
-from .fakes import FakeModel, FakeModelORM
+from tests.fakes import FakeModel, FakeModelORM
 
 
 @pytest.fixture

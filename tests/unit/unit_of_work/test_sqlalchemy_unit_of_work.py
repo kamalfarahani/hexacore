@@ -4,8 +4,7 @@ from sqlalchemy.orm import Session
 
 from hexacore.repository.sqlalchemy.repository import SQLAlchemyRepository
 from hexacore.unit_of_work.sqlalchemy_unit_of_work import SQLAlchemyUnitOfWork
-
-from .fakes import FakeModel, FakeModelORM
+from tests.fakes import FakeModel, FakeModelORM
 
 
 class CountingSessionFactory:

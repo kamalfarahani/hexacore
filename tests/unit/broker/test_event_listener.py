@@ -5,8 +5,7 @@ import pytest
 
 from hexacore.broker.connection.exceptions import ConsumeError
 from hexacore.broker.event_listener import EventListener
-
-from .fakes import FakeBrokerConnection
+from tests.fakes import FakeBrokerConnection
 
 
 @pytest.fixture

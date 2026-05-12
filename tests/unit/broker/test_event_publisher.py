@@ -4,8 +4,7 @@ import pytest
 
 from hexacore.broker.connection.exceptions import PublishError
 from hexacore.broker.event_publisher import EventPublisher
-
-from .fakes import FakeBrokerConnection
+from tests.fakes import FakeBrokerConnection
 
 
 @pytest.fixture

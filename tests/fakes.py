@@ -5,11 +5,33 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from hexacore.broker.connection.base import BaseBrokerConnection
 from hexacore.repository.sqlalchemy.model_orm import ModelORM
+from hexacore.repository.sqlalchemy.with_id import SQLAlchemyWithID
 
 
 class FakeModel(BaseModel):
     name: str
     age: int
+
+
+class FakeWithID(SQLAlchemyWithID[FakeModel]):
+    """A fake SQLAlchemyWithID that does not require a real ORM model.
+
+    It bypasses the parent ``__init__`` so tests don't need a SQLAlchemy
+    session or declarative-mapped instance.
+    """
+
+    def __init__(self, *, id: int | None, model: FakeModel) -> None:
+        self._id = id
+        self._model = model
+
+    def get_id(self) -> int:
+        # The base interface promises ``int``; tests that need to simulate an
+        # un-persisted entity use ``id=None`` and assert via the promise's
+        # ``ready`` / ``result`` properties without calling get_id directly.
+        return self._id  # type: ignore[return-value]
+
+    def get_model(self) -> FakeModel:
+        return self._model
 
 
 class FakeModelORM(ModelORM[FakeModel]):
