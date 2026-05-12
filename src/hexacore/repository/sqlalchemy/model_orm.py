@@ -1,3 +1,5 @@
+"""SQLAlchemy ORM base entity class."""
+
 from abc import abstractmethod
 
 from pydantic import BaseModel
@@ -22,11 +24,11 @@ class ModelORM[M: BaseModel](DeclarativeBase):
         Create an ORM model from a domain model.
 
         Args:
-            model (M): The domain model.
-            session (Session): The SQLAlchemy session.
+            model: The domain model.
+            session: The SQLAlchemy session.
 
         Returns:
-            ModelORM[M]: The ORM model.
+            The ORM entity created from the domain model.
         """
         raise NotImplementedError()
 
@@ -36,6 +38,6 @@ class ModelORM[M: BaseModel](DeclarativeBase):
         Convert an ORM model to a domain model.
 
         Returns:
-            M: The domain model.
+            The domain model corresponding to this ORM entity.
         """
         raise NotImplementedError()

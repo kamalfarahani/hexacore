@@ -1,3 +1,5 @@
+"""WithID abstract interface for entities carrying a database ID."""
+
 from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
@@ -7,8 +9,8 @@ class WithID[M: BaseModel](ABC):
     """
     Abstract base class for objects that carry an integer ID and an associated model.
 
-    Type Args:
-        M: A Pydantic BaseModel subtype representing the associated model.
+    Generic over ``M``, a ``BaseModel`` subtype representing the associated
+    domain model.
     """
 
     @abstractmethod

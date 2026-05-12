@@ -1,5 +1,7 @@
+"""Base command types for hexacore applications."""
+
 from pydantic import BaseModel
 
 
 class BaseCommand(BaseModel):
-    """Base command model for Hexacore commands."""
+    """Base class for all domain commands."""

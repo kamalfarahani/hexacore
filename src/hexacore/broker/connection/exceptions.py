@@ -1,5 +1,8 @@
+"""Broker connection exception types."""
+
+
 class OpenError(Exception):
-    """Exception raised when connection is not open"""
+    """Raised when the connection is not open or is already open."""
 
 
 class ConsumeError(Exception):

@@ -1,3 +1,6 @@
+"""Repository-specific exception types."""
+
+
 class PromiseNotReadyError(RuntimeError):
     """
     Exception raised when a promise is not ready.

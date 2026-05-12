@@ -1,3 +1,5 @@
+"""Abstract base repository interface."""
+
 from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
@@ -16,10 +18,10 @@ class BaseRepository[M: BaseModel](ABC):
         Add a model to the repository.
 
         Args:
-            model (M): The model to add.
+            model: The model to add.
 
         Returns:
-            BaseDBPromise[M]: A promise that resolves to the added model.
+            A promise that resolves to the added model.
         """
         raise NotImplementedError()
 
@@ -29,10 +31,10 @@ class BaseRepository[M: BaseModel](ABC):
         Get a model by its ID.
 
         Args:
-            id (int): The ID of the model.
+            id: The ID of the model.
 
         Returns:
-            BaseDBPromise[M]: A promise that resolves to the model with the given ID.
+            A promise that resolves to the model with the given ID.
         """
         raise NotImplementedError()
 
@@ -42,11 +44,11 @@ class BaseRepository[M: BaseModel](ABC):
         Update a model in the repository.
 
         Args:
-            model (M): The model to update.
-            id (int): The ID of the model to update.
+            model: The updated model data.
+            id: The ID of the model to update.
 
         Returns:
-            BaseDBPromise[M]: A promise that resolves to the updated model.
+            A promise that resolves to the updated model.
         """
         raise NotImplementedError()
 
@@ -56,9 +58,9 @@ class BaseRepository[M: BaseModel](ABC):
         Delete a model from the repository.
 
         Args:
-            id (int): The ID of the model to delete.
+            id: The ID of the model to delete.
 
         Returns:
-            BaseDBPromise[M]: A promise that resolves to the deleted model.
+            A promise that resolves to the deleted model.
         """
         raise NotImplementedError()

@@ -1,3 +1,5 @@
+"""SQLAlchemy unit-of-work implementation."""
+
 from collections.abc import Callable
 
 from pydantic import BaseModel
@@ -29,8 +31,9 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
         Initialize the unit of work.
 
         Args:
-            repository (SQLAlchemyRepository[M]): The repository.
-            session_factory (SessionFactory): The session factory.
+            session_factory: A callable that creates a new SQLAlchemy ``Session``.
+            repo_factory: A callable that creates a ``SQLAlchemyRepository``
+                from an existing session.
         """
         self._session = None
         self._session_factory = session_factory
@@ -42,7 +45,7 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
         Get the database session.
 
         Returns:
-            Session: The database session.
+            The current database session.
         """
         if self._session is None:
             self._session = self._session_factory()
@@ -55,28 +58,20 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
         Get the repository.
 
         Returns:
-            SQLAlchemyRepository[M]: The repository.
+            A repository bound to the current session.
         """
         return self._repo_factory(self.session)
 
     def start(self) -> None:
         """
-        Make the unit of work ready for use.
-        Initializes the database session.
-
-        Side effects:
-            - Initializes the database session.
+        Prepare the unit of work for use by initializing the database session.
         """
         self._session = self._session_factory()
 
     def done(self) -> None:
         """
-        Finish the unit of work and release any resources.
-        Rolls back any uncommitted transactions and closes the database session.
-
-        Side effects:
-            - Rolls back any uncommitted transactions.
-            - Closes the database session.
+        Finish the unit of work, rolling back uncommitted changes and closing
+        the session.
         """
         self.rollback()
         if self._session is not None:
@@ -84,20 +79,14 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
 
     def commit(self) -> None:
         """
-        Commit the transaction.
-
-        Side effects:
-            - Commits the transaction.
+        Flush all pending changes and commit the current transaction.
         """
         if self._session is not None:
             self._session.commit()
 
     def rollback(self) -> None:
         """
-        Rollback the transaction.
-
-        Side effects:
-            - Rolls back the transaction.
+        Discard all pending changes by rolling back the current transaction.
         """
         if self._session is not None:
             self._session.rollback()

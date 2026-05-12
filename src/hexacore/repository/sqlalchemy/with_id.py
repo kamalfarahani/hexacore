@@ -1,3 +1,5 @@
+"""SQLAlchemy implementation of the WithID interface."""
+
 from pydantic import BaseModel
 
 from hexacore.repository.base import WithID
@@ -21,8 +23,7 @@ class SQLAlchemyWithID[M: BaseModel](WithID[M]):
         Initialize the SQLAlchemy WithID wrapper.
 
         Args:
-            model_orm (ModelORM[M]): The ORM model instance.
-            model (M): The domain model instance.
+            model_orm: The ORM model instance.
         """
         self.model_orm = model_orm
 
@@ -31,7 +32,7 @@ class SQLAlchemyWithID[M: BaseModel](WithID[M]):
         Get the ID of the model.
 
         Returns:
-            int | None: The ID of the model or None if not set.
+            The database ID, or ``None`` if not yet assigned.
         """
         return self.model_orm.id
 
@@ -40,6 +41,6 @@ class SQLAlchemyWithID[M: BaseModel](WithID[M]):
         Get the domain model associated with this ID.
 
         Returns:
-            M: The domain model associated with this ID.
+            The domain model associated with this ID.
         """
         return self.model_orm.to_model()

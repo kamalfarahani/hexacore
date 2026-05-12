@@ -1,3 +1,5 @@
+"""Abstract database promise interface."""
+
 from abc import ABC, abstractmethod
 
 from katharos.ds import Result
@@ -10,8 +12,11 @@ from .with_id import WithID
 
 class BaseDBPromise[M: BaseModel](ABC):
     """
-    Base database promise interface.
-    This interface is used to represent an action for the database that can be executed later.
+    Abstract database promise interface.
+
+    Represents a deferred database action whose result may not be available
+    until after the current transaction is committed.  Generic over ``M``, a
+    ``BaseModel`` subtype representing the domain model.
     """
 
     @property
@@ -21,7 +26,8 @@ class BaseDBPromise[M: BaseModel](ABC):
         Get the value of the promise.
 
         Returns:
-            Result[NotFoundError, M]: The value of the promise, or an error if not found.
+            The domain model wrapped in a ``Result``, or a ``NotFoundError``
+            failure if the entity was not found.
         """
         raise NotImplementedError()
 
@@ -32,7 +38,7 @@ class BaseDBPromise[M: BaseModel](ABC):
         Check if the promise is ready.
 
         Returns:
-            bool: True if the promise is ready, False otherwise.
+            ``True`` if the database has assigned an ID, ``False`` otherwise.
         """
         raise NotImplementedError()
 
@@ -43,7 +49,7 @@ class BaseDBPromise[M: BaseModel](ABC):
         Get the result of the promise.
 
         Returns:
-            Result[PromiseNotReadyError, WithID[M]]: The result of the promise,
-                or an error if the promise is not ready.
+            The ``WithID`` wrapper in a ``Result``, or a ``PromiseNotReadyError``
+            failure if the promise is not yet ready.
         """
         raise NotImplementedError()

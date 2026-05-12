@@ -1,3 +1,5 @@
+"""Event listener for consuming messages from a broker queue."""
+
 import logging
 from typing import Generator
 
@@ -9,18 +11,16 @@ logger = logging.getLogger(__name__)
 
 class EventListener[C: BaseBrokerConnection]:
     """
-    A generic event listener that consumes messages from a broker queue.
+    Consumes messages from a broker queue.
 
-    This class provides a high-level interface for listening to events from a message broker.
-    It wraps a broker connection and provides context manager support for proper resource management.
-
-    Type Parameters:
-        C: The type of broker connection, must be a subclass of BaseBrokerConnection.
+    Wraps a broker connection and provides context manager support for
+    proper resource management.  Generic over ``C``, a
+    ``BaseBrokerConnection`` subtype.
 
     Example:
-        with EventListener(connection) as listener:
-            for message in listener.listen("my_queue"):
-                process_message(message)
+        >>> with EventListener(connection) as listener:
+        ...     for message in listener.listen("my_queue"):
+        ...         process_message(message)
     """
 
     def __init__(self, connection: C) -> None:
@@ -28,7 +28,7 @@ class EventListener[C: BaseBrokerConnection]:
         Initialize the active event listener.
 
         Args:
-            connection (C): The broker connection to use for listening to events.
+            connection: The broker connection to use for listening to events.
         """
         self._connection = connection
 
@@ -37,10 +37,10 @@ class EventListener[C: BaseBrokerConnection]:
         Listen for messages from a queue.
 
         Args:
-            queue_name (str): The name of the queue to listen to.
+            queue_name: The name of the queue to listen to.
 
         Yields:
-            dict: The consumed message from the queue.
+            Each consumed message as a dict.
         """
         try:
             yield from self._connection.consume(queue_name)
@@ -52,7 +52,7 @@ class EventListener[C: BaseBrokerConnection]:
         Open the connection for the event listener.
 
         Returns:
-            EventListener[C]: The event listener instance with an open connection.
+            This event listener instance with an open connection.
         """
         self._connection.__enter__()
         return self
@@ -62,8 +62,8 @@ class EventListener[C: BaseBrokerConnection]:
         Close the connection for the event listener.
 
         Args:
-            exc_type: The type of exception raised (if any).
-            exc_val: The value of the exception raised (if any).
-            exc_tb: The traceback of the exception raised (if any).
+            exc_type: The exception type, or ``None``.
+            exc_val: The exception instance, or ``None``.
+            exc_tb: The traceback, or ``None``.
         """
         self._connection.__exit__(exc_type, exc_val, exc_tb)

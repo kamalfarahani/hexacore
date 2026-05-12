@@ -1,3 +1,5 @@
+"""RabbitMQ broker connection implementation."""
+
 import json
 from typing import Generator
 
@@ -15,12 +17,10 @@ class RabbitMQConnection(BaseBrokerConnection):
     """
     RabbitMQ connection manager for message broker operations.
 
-    This class provides a high-level interface for managing RabbitMQ connections,
-    including queue and exchange management, message publishing, and consumption.
-
-    Attributes:
-        _parameters: The connection parameters for the RabbitMQ server.
-        _connection_pair: A tuple of (connection, channel) or None if not connected.
+    Provides a high-level interface for managing RabbitMQ connections,
+    including queue and exchange management, message publishing, and
+    consumption.  Internally maintains a pika ``BlockingConnection`` /
+    ``BlockingChannel`` pair.
 
     Example:
         >>> from pika import ConnectionParameters
@@ -38,7 +38,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         Initialize the RabbitMQ connection.
 
         Args:
-            parameters (Parameters): The connection parameters for the RabbitMQ server.
+            parameters: The pika connection parameters for the RabbitMQ server.
         """
         self._parameters = parameters
         self._connection_pair = None
@@ -48,7 +48,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         Get the channel from the connection pair.
 
         Returns:
-            BlockingChannel: The channel from the connection pair.
+            The active pika channel.
 
         Raises:
             OpenError: If the connection is not open.
@@ -62,8 +62,8 @@ class RabbitMQConnection(BaseBrokerConnection):
         """
         Open the connection.
 
-        Side Effects:
-            Opens the connection and channel.
+        Note:
+            Opens the underlying pika ``BlockingConnection`` and channel.
 
         Raises:
             OpenError: If the connection is already open.
@@ -78,8 +78,8 @@ class RabbitMQConnection(BaseBrokerConnection):
         """
         Close the connection.
 
-        Side Effects:
-            Closes the connection and channel.
+        Note:
+            Closes the channel and underlying connection if they are open.
         """
         match self._connection_pair:
             case (connection, channel):
@@ -100,11 +100,8 @@ class RabbitMQConnection(BaseBrokerConnection):
         Declare a queue on the RabbitMQ server.
 
         Args:
-            queue_name (str): The name of the queue to create.
-            durable (bool): Whether the queue should survive broker restarts.
-
-        Side Effects:
-            Declares the queue on the RabbitMQ server.
+            queue_name: The name of the queue to declare.
+            durable: Whether the queue should survive broker restarts.
 
         Raises:
             OpenError: If the connection is not open.
@@ -124,12 +121,10 @@ class RabbitMQConnection(BaseBrokerConnection):
         Declare an exchange on the RabbitMQ server.
 
         Args:
-            exchange_name (str): The name of the exchange to create.
-            exchange_type (str): The type of exchange (direct, fanout, topic, headers).
-            durable (bool): Whether the exchange should survive broker restarts.
-
-        Side Effects:
-            Declares the exchange on the RabbitMQ server.
+            exchange_name: The name of the exchange to declare.
+            exchange_type: The exchange type (``direct``, ``fanout``, ``topic``,
+                or ``headers``).
+            durable: Whether the exchange should survive broker restarts.
 
         Raises:
             OpenError: If the connection is not open.
@@ -150,14 +145,10 @@ class RabbitMQConnection(BaseBrokerConnection):
         Bind a queue to an exchange with a routing key.
 
         Args:
-            queue_name (str): The name of the queue to bind.
-            exchange_name (str): The name of the exchange to bind to.
-            routing_key (str): The routing key for the binding.
-                Pass "" explicitly for fanout exchanges
-                where routing keys are ignored.
-
-        Side Effects:
-            Binds the queue to the exchange on the RabbitMQ server.
+            queue_name: The name of the queue to bind.
+            exchange_name: The name of the exchange to bind to.
+            routing_key: The routing key for the binding.  Pass ``""``
+                explicitly for fanout exchanges where routing keys are ignored.
 
         Raises:
             OpenError: If the connection is not open.
@@ -178,15 +169,12 @@ class RabbitMQConnection(BaseBrokerConnection):
         Publish data to an exchange.
 
         Args:
-            exchange_name (str): The name of the exchange to publish to.
-            routing_key (str): The routing key for the message.
-            data (dict): The data to publish.
-
-        Side Effects:
-            Publishes the data to the specified queue.
+            exchange_name: The name of the exchange to publish to.
+            routing_key: The routing key for the message.
+            data: The data to publish as a JSON-serialisable dict.
 
         Raises:
-            PublishError: If there is an error publishing to the exchange.
+            PublishError: If publishing fails.
         """
         try:
             self._get_channel().basic_publish(
@@ -207,10 +195,11 @@ class RabbitMQConnection(BaseBrokerConnection):
         Consume messages from a queue.
 
         Args:
-            queue_name (str): The name of the queue to consume from.
+            queue_name: The name of the queue to consume from.
 
         Yields:
-            dict: The consumed message containing method_frame, header_frame, and body.
+            Each consumed message as a dict with ``method_frame``,
+            ``header_frame``, and ``body`` keys.
 
         Raises:
             ConsumeError: If there is an error consuming from the queue.

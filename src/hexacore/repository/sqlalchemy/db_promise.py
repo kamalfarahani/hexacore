@@ -1,3 +1,5 @@
+"""SQLAlchemy implementation of the database promise pattern."""
+
 from katharos.ds import Result
 from pydantic import BaseModel
 
@@ -11,15 +13,13 @@ class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
     """
     SQLAlchemy implementation of the database promise pattern.
 
-    This class wraps a SQLAlchemy ORM model through SQLAlchemyWithID and provides
-    a way to track whether the object has been persisted to the database. It implements
-    lazy loading and deferred access to database entities.
-
-    Type Args:
-        M: A Pydantic BaseModel subtype representing the domain model.
+    Wraps a ``SQLAlchemyWithID`` and provides deferred access to the
+    persisted entity.  Generic over ``M``, a ``BaseModel`` subtype
+    representing the domain model.
 
     Attributes:
-        with_id: The SQLAlchemy WithID wrapper containing the ORM model, or None if not found.
+        with_id: The ``SQLAlchemyWithID`` wrapper, or ``None`` if the entity
+            was not found.
     """
 
     with_id: SQLAlchemyWithID[M] | None
@@ -32,7 +32,8 @@ class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
         Initialize the promise.
 
         Args:
-            with_id: The SQLAlchemy WithID wrapper containing the ORM model, or None if not found.
+            with_id: The ``SQLAlchemyWithID`` wrapper, or ``None`` if the
+                entity was not found.
         """
         self.with_id = with_id
 
@@ -42,7 +43,8 @@ class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
         Get the value of the promise.
 
         Returns:
-            Result[NotFoundError, M]: The value of the promise.
+            The domain model in a ``Result``, or a ``NotFoundError`` failure
+            if the entity was not found.
         """
         if self.with_id is None:
             return Result[NotFoundError, M].Failure(
@@ -57,7 +59,8 @@ class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
         Check if the promise is ready.
 
         Returns:
-            bool: True if the promise is ready, False otherwise.
+            ``True`` if the entity has a database-assigned ID, ``False``
+            otherwise.
         """
         if self.with_id is None:
             return False
@@ -73,7 +76,8 @@ class SQLAlchemyDBPromise[M: BaseModel](BaseDBPromise[M]):
         Get the result of the promise.
 
         Returns:
-            Result[PromiseNotReadyError, SQLAlchemyWithID[M]]: The result of the promise.
+            The ``SQLAlchemyWithID`` wrapper in a ``Result``, or a
+            ``PromiseNotReadyError`` failure if the promise is not ready.
         """
         if not self.ready:
             return Result[PromiseNotReadyError, SQLAlchemyWithID[M]].Failure(

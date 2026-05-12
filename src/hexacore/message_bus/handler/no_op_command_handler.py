@@ -1,3 +1,5 @@
+"""No-op command handler for unregistered command types."""
+
 import logging
 
 from katharos.ds import ImmutableList
@@ -13,10 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class NoOpCommandHandler(BaseCommandHandler):
-    """
-    A command handler that performs no operation.
-    This can be used as a default handler for commands that do not have a specific handler registered.
-    """
+    """Command handler that performs no operation, used as a default fallback."""
 
     def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
         """

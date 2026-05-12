@@ -1,3 +1,5 @@
+"""Core message bus implementation."""
+
 from katharos.ds import ImmutableList
 from toolz import concat
 
@@ -27,9 +29,9 @@ class BaseMessageBus:
         Initialize the message bus.
 
         Args:
-            handle_context (HandleContext): The context for handling commands and events
-            command_registry (CommandRegistry): The registry for command handlers
-            event_registry (EventRegistry): The registry for event handlers
+            handle_context: The context for handling commands and events.
+            command_registry: The registry for command handlers.
+            event_registry: The registry for event handlers.
         """
         self._handle_context = handle_context
         self._command_registry = command_registry
@@ -40,7 +42,7 @@ class BaseMessageBus:
         Handle a message
 
         Args:
-            message (BaseCommand | BaseEvent): The message to handle
+            message: The message to handle.
         """
         messages = [message]
         while messages:
@@ -56,10 +58,10 @@ class BaseMessageBus:
         Handle a command
 
         Args:
-            command (BaseCommand): The command to handle
+            command: The command to handle.
 
         Returns:
-            ImmutableList[BaseEvent]: The events resulting from the command handling
+            The events resulting from the command handling.
         """
         handler = self._command_registry[type(command)]
         return handler.handle(command)
@@ -69,10 +71,10 @@ class BaseMessageBus:
         Handle an event
 
         Args:
-            event (BaseEvent): The event to handle
+            event: The event to handle.
 
         Returns:
-            ImmutableList[BaseEvent]: The events resulting from the event handling
+            The events resulting from the event handling.
         """
         handlers = self._event_registry[type(event)]
         return ImmutableList(

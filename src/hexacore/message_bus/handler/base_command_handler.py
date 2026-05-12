@@ -1,3 +1,5 @@
+"""Abstract base class for command handlers."""
+
 from abc import ABC, abstractmethod
 
 from katharos.ds import ImmutableList
@@ -12,11 +14,10 @@ class BaseCommandHandler[Command: BaseCommand](ABC):
     """
     Abstract base class for command handlers in the message bus.
 
-    Subclasses must implement the handle method to process a specific
-    command type and return the resulting domain events.
-
-    Type Args:
-        Command: A BaseCommand subtype representing the command this handler processes.
+    Subclasses must implement the ``handle`` method to process a specific
+    command type and return the resulting domain events.  Generic over
+    ``Command``, a ``BaseCommand`` subtype representing the command this
+    handler processes.
 
     Attributes:
         handle_context: The context object providing shared resources and
@@ -42,20 +43,18 @@ class BaseCommandHandler[Command: BaseCommand](ABC):
             command: The command instance to handle.
 
         Returns:
-            An immutable list of domain events produced as a result of handling
-            the command.
+            An immutable list of domain events produced by handling the command.
         """
         raise NotImplementedError()
 
     def __call__(self, command: Command) -> ImmutableList[BaseEvent]:
         """
-        Make the handler callable, delegating to handle.
+        Make the handler callable, delegating to ``handle``.
 
         Args:
             command: The command instance to handle.
 
         Returns:
-            An immutable list of domain events produced as a result of handling
-            the command.
+            An immutable list of domain events produced by handling the command.
         """
         return self.handle(command)

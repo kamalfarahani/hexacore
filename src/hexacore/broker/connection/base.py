@@ -1,3 +1,5 @@
+"""Abstract broker connection interface."""
+
 from abc import ABC, abstractmethod
 from typing import Generator, Self
 
@@ -33,8 +35,8 @@ class BaseBrokerConnection(ABC):
         Declare a queue on the broker.
 
         Args:
-            queue_name (str): The name of the queue to create.
-            durable (bool): Whether the queue should survive broker restarts.
+            queue_name: The name of the queue to declare.
+            durable: Whether the queue should survive broker restarts.
         """
         raise NotImplementedError()
 
@@ -49,9 +51,10 @@ class BaseBrokerConnection(ABC):
         Declare an exchange on the broker.
 
         Args:
-            exchange_name (str): The name of the exchange to create.
-            exchange_type (str): The type of exchange (direct, fanout, topic, headers).
-            durable (bool): Whether the exchange should survive broker restarts.
+            exchange_name: The name of the exchange to declare.
+            exchange_type: The exchange type (``direct``, ``fanout``, ``topic``,
+                or ``headers``).
+            durable: Whether the exchange should survive broker restarts.
         """
         raise NotImplementedError()
 
@@ -66,9 +69,9 @@ class BaseBrokerConnection(ABC):
         Bind a queue to an exchange with a routing key.
 
         Args:
-            queue_name (str): The name of the queue to bind.
-            exchange_name (str): The name of the exchange to bind to.
-            routing_key (str): The routing key for the binding.
+            queue_name: The name of the queue to bind.
+            exchange_name: The name of the exchange to bind to.
+            routing_key: The routing key for the binding.
         """
         raise NotImplementedError()
 
@@ -83,9 +86,9 @@ class BaseBrokerConnection(ABC):
         Publish data to an exchange with a routing key.
 
         Args:
-            exchange_name (str): The name of the exchange to publish to.
-            routing_key (str): The routing key for the message.
-            data (dict): The data to publish.
+            exchange_name: The name of the exchange to publish to.
+            routing_key: The routing key for the message.
+            data: The data to publish as a JSON-serialisable dict.
         """
         raise NotImplementedError()
 
@@ -98,10 +101,10 @@ class BaseBrokerConnection(ABC):
         Consume messages from a queue.
 
         Args:
-            queue_name (str): The name of the queue to consume from.
+            queue_name: The name of the queue to consume from.
 
         Yields:
-            dict: The consumed message.
+            Each consumed message as a dict.
         """
         raise NotImplementedError()
 
@@ -110,7 +113,7 @@ class BaseBrokerConnection(ABC):
         Open the connection.
 
         Returns:
-            Self: The broker connection instance.
+            This broker connection instance.
         """
         self.open()
         return self
@@ -120,8 +123,8 @@ class BaseBrokerConnection(ABC):
         Close the connection.
 
         Args:
-            exc_type: The exception type.
-            exc_val: The exception value.
-            exc_tb: The exception traceback.
+            exc_type: The exception type, or ``None``.
+            exc_val: The exception instance, or ``None``.
+            exc_tb: The traceback, or ``None``.
         """
         self.close()

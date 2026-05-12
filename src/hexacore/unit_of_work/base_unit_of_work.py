@@ -1,3 +1,5 @@
+"""Abstract unit-of-work interface."""
+
 from abc import ABC, abstractmethod
 from types import TracebackType
 from typing import Self
@@ -16,7 +18,10 @@ class BaseUnitOfWork[M: BaseModel](ABC):
     @abstractmethod
     def repository(self) -> BaseRepository[M]:
         """
-        Get the repository.
+        The repository for the model type managed by this unit of work.
+
+        Returns:
+            The repository instance.
         """
         raise NotImplementedError()
 
@@ -25,7 +30,7 @@ class BaseUnitOfWork[M: BaseModel](ABC):
         Enter the unit of work context manager.
 
         Returns:
-            BaseUnitOfWork: The unit of work context manager.
+            This unit of work instance.
         """
         self.start()
         return self
@@ -43,27 +48,19 @@ class BaseUnitOfWork[M: BaseModel](ABC):
 
     @abstractmethod
     def start(self) -> None:
-        """
-        Prepare the unit of work for use.
-        """
+        """Prepare the unit of work for use."""
         raise NotImplementedError()
 
     def done(self) -> None:
-        """
-        Finish the unit of work and release any resources.
-        """
+        """Finish the unit of work and release any resources."""
         raise NotImplementedError()
 
     @abstractmethod
     def commit(self) -> None:
-        """
-        Commit the transaction.
-        """
+        """Flush all pending changes and commit the current transaction."""
         raise NotImplementedError()
 
     @abstractmethod
     def rollback(self) -> None:
-        """
-        Rollback the transaction.
-        """
+        """Discard all pending changes by rolling back the current transaction."""
         raise NotImplementedError()

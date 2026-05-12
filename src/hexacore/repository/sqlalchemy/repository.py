@@ -1,3 +1,5 @@
+"""SQLAlchemy repository implementation."""
+
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -9,9 +11,7 @@ from .with_id import SQLAlchemyWithID
 
 
 class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
-    """
-    SQLAlchemy repository implementation.
-    """
+    """SQLAlchemy-backed repository implementation."""
 
     _session: Session
     _ModelORMClass: type[ModelORM[M]]
@@ -25,8 +25,8 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
         Initialize the repository.
 
         Args:
-            session (Session): The SQLAlchemy session to use for database operations.
-            ModelORMClass (type[ModelORM[M]]): The ORM class that maps the model to the database.
+            session: The SQLAlchemy session to use for database operations.
+            ModelORMClass: The ORM class that maps the domain model to the database.
         """
         self._session = session
         self._ModelORMClass = ModelORMClass
@@ -36,10 +36,10 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
         Add a model to the repository.
 
         Args:
-            model (M): The model to add.
+            model: The model to add.
 
         Returns:
-            SQLAlchemyDBPromise[M]: A promise that will be fulfilled when the model is persisted to the database.
+            A promise that will be fulfilled when the model is persisted to the database.
         """
         model_orm = self._ModelORMClass.from_model(
             model,
@@ -54,10 +54,10 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
         Get a model by its ID.
 
         Args:
-            id (int): The ID of the model to retrieve.
+            id: The ID of the model to retrieve.
 
         Returns:
-            SQLAlchemyDBPromise[M]: A promise that will be fulfilled when the model is retrieved from the database.
+            A promise that will be fulfilled when the model is retrieved from the database.
         """
         model_orm = self._session.get(
             self._ModelORMClass,
@@ -74,11 +74,11 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
         Update a model in the repository.
 
         Args:
-            model (M): The model to update.
-            id (int): The ID of the model to update.
+            model: The updated model data.
+            id: The ID of the model to update.
 
         Returns:
-            SQLAlchemyDBPromise[M]: A promise that will be fulfilled when the model is updated in the database.
+            A promise that will be fulfilled when the model is updated in the database.
         """
         model_orm = self._session.get(
             self._ModelORMClass,
@@ -101,10 +101,10 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
         Delete a model from the repository.
 
         Args:
-            id (int): The ID of the model to delete.
+            id: The ID of the model to delete.
 
         Returns:
-            SQLAlchemyDBPromise[M]: A promise that will be fulfilled when the model is deleted from the database.
+            A promise that will be fulfilled when the model is deleted from the database.
         """
         model_orm = self._session.get(
             self._ModelORMClass,

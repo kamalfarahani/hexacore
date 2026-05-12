@@ -1,3 +1,5 @@
+"""Handler registries for commands and events."""
+
 from collections import defaultdict
 from collections.abc import Callable
 
@@ -22,7 +24,8 @@ class CommandRegistry:
         Initializes the command registry with an empty defaultdict.
 
         Args:
-            default_handler_factory (Callable[[], BaseCommandHandler]): A factory function that returns a default command handler when a command type is accessed that does not have an associated handler in the registry.
+            default_handler_factory: A factory that returns a default command handler
+                when a command type has no registered handler.
         """
         self._registry = defaultdict(default_handler_factory)
 
@@ -31,10 +34,10 @@ class CommandRegistry:
         Retrieves the command handler associated with the given command type.
 
         Args:
-            key (type[BaseCommand]): The command type for which to retrieve the handler.
+            key: The command type for which to retrieve the handler.
 
         Returns:
-            BaseCommandHandler: The command handler associated with the command type.
+            The command handler associated with the command type.
         """
         return self._registry[key]
 
@@ -47,8 +50,8 @@ class CommandRegistry:
         Associates a command handler with a specific command type in the registry.
 
         Args:
-            key (type[BaseCommand]): The command type to associate with the handler.
-            value (BaseCommandHandler): The command handler to associate with the command type.
+            key: The command type to associate with the handler.
+            value: The command handler to associate with the command type.
         """
         self._registry[key] = value
 
@@ -66,8 +69,8 @@ class EventRegistry:
         Initializes the event registry with an empty defaultdict.
 
         Args:
-            default_handler_factory (Callable[[], list[BaseEventHandler]]):
-                A factory function that returns a default list of event handlers when an event type is accessed that does not have associated handlers in the registry.
+            default_handler_factory: A factory that returns a default list of event
+                handlers when an event type has no registered handlers.
         """
         self._registry = defaultdict(default_handler_factory)
 
@@ -76,10 +79,10 @@ class EventRegistry:
         Retrieves the list of event handlers associated with the given event type.
 
         Args:
-            key (type[BaseEvent]): The event type for which to retrieve handlers.
+            key: The event type for which to retrieve handlers.
 
         Returns:
-            list[BaseEventHandler]: A list of event handlers associated with the event type.
+            A list of event handlers associated with the event type.
         """
         return self._registry[key]
 
@@ -92,7 +95,7 @@ class EventRegistry:
         Associates a list of event handlers with a specific event type in the registry.
 
         Args:
-            key (type[BaseEvent]): The event type to associate with the handlers.
-            value (list[BaseEventHandler]): A list of event handlers to associate with the event type.
+            key: The event type to associate with the handlers.
+            value: A list of event handlers to associate with the event type.
         """
         self._registry[key] = value
