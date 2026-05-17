@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from katharos.ds import ImmutableList
+from katharos.types import ImmutableList
 
 from hexacore.event import BaseEvent
 

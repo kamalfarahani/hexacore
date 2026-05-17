@@ -12,7 +12,7 @@ import json
 import time
 
 import pytest
-from katharos.ds import ImmutableList
+from katharos.types import ImmutableList
 from pika import ConnectionParameters
 from pydantic import BaseModel
 from sqlalchemy import Engine, create_engine
@@ -34,7 +34,6 @@ from hexacore.message_bus.registry import CommandRegistry, EventRegistry
 from hexacore.repository.sqlalchemy.repository import SQLAlchemyRepository
 from hexacore.unit_of_work.sqlalchemy_unit_of_work import SQLAlchemyUnitOfWork
 from tests.fakes import FakeModel, FakeModelORM
-
 
 # ---------------------------------------------------------------------------
 # Messages
@@ -61,9 +60,7 @@ class CreateAliceHandler(BaseCommandHandler[CreateAlice]):
         with self.handle_context.unit_of_work_factory(FakeModel) as uow:
             uow.repository.add(FakeModel(name=command.name, age=command.age))
             uow.commit()
-        return ImmutableList(
-            [AliceCreated(name=command.name, age=command.age)]
-        )
+        return ImmutableList([AliceCreated(name=command.name, age=command.age)])
 
 
 class PublishAliceCreatedHandler(BaseEventHandler[AliceCreated]):
@@ -108,7 +105,9 @@ def _setup_topology(
     return in_queue, in_exchange, in_rk, out_queue, out_exchange, out_rk
 
 
-def _cleanup(conn: RabbitMQConnection, *, queues: list[str], exchanges: list[str]) -> None:
+def _cleanup(
+    conn: RabbitMQConnection, *, queues: list[str], exchanges: list[str]
+) -> None:
     for q in queues:
         try:
             conn._get_channel().queue_delete(queue=q)

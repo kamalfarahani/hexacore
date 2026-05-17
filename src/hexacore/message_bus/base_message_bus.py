@@ -1,6 +1,6 @@
 """Core message bus implementation."""
 
-from katharos.ds import ImmutableList
+from katharos.types import ImmutableList
 from toolz import concat
 
 from hexacore.command import BaseCommand

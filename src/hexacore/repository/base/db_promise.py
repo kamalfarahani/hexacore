@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from katharos.ds import Result
+from katharos.types import Result
 from pydantic import BaseModel
 
 from hexacore.repository.exceptions import PromiseNotReadyError

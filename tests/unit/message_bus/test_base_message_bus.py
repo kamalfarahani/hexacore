@@ -1,5 +1,5 @@
 import pytest
-from katharos.ds import ImmutableList
+from katharos.types import ImmutableList
 
 from hexacore.broker.event_publisher import EventPublisher
 from hexacore.command import BaseCommand

@@ -2,7 +2,7 @@
 
 import logging
 
-from katharos.ds import ImmutableList
+from katharos.types import ImmutableList
 
 from hexacore.command import BaseCommand
 from hexacore.event import BaseEvent

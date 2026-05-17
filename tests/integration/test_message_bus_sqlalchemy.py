@@ -8,7 +8,7 @@ production implementation.
 """
 
 import pytest
-from katharos.ds import ImmutableList
+from katharos.types import ImmutableList
 from pydantic import BaseModel
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session

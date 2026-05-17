@@ -1,6 +1,6 @@
 """SQLAlchemy implementation of the database promise pattern."""
 
-from katharos.ds import Result
+from katharos.types import Result
 from pydantic import BaseModel
 
 from hexacore.repository.base import BaseDBPromise
