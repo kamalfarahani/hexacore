@@ -48,10 +48,10 @@ class FakeModelORM(ModelORM[FakeModel]):
     age: Mapped[int] = mapped_column()
 
     @staticmethod
-    def from_model(model: FakeModel, session: Session) -> "FakeModelORM":
+    def from_model(model: FakeModel, session: Session, **kwargs) -> "FakeModelORM":
         return FakeModelORM(name=model.name, age=model.age)
 
-    def to_model(self, session: Session) -> FakeModel:
+    def to_model(self, session: Session, **kwargs) -> FakeModel:
         return FakeModel(name=self.name, age=self.age)
 
 

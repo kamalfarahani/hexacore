@@ -263,7 +263,7 @@ class TestGetErrorHandling:
 
         # Create an ORM that will raise an exception when to_model is called
         class BrokenModelORM(FakeModelORM):
-            def to_model(self, session) -> FakeModel:
+            def to_model(self, session, **kwargs) -> FakeModel:
                 raise ValueError("Database corruption")
 
         # Replace the repository's ORM class with the broken one
@@ -288,7 +288,7 @@ class TestGetErrorHandling:
         id_ = _persist(session, model)
 
         class BrokenModelORM(FakeModelORM):
-            def to_model(self, session) -> FakeModel:
+            def to_model(self, session, **kwargs) -> FakeModel:
                 raise RuntimeError("Unexpected error")
 
         broken_repository = SQLAlchemyRepository[FakeModel](session, BrokenModelORM)
@@ -310,7 +310,7 @@ class TestDeleteErrorHandling:
         id_ = _persist(session, model)
 
         class BrokenModelORM(FakeModelORM):
-            def to_model(self, session) -> FakeModel:
+            def to_model(self, session, **kwargs) -> FakeModel:
                 raise ValueError("Cannot deserialize model")
 
         broken_repository = SQLAlchemyRepository[FakeModel](session, BrokenModelORM)
@@ -333,7 +333,7 @@ class TestDeleteErrorHandling:
         id_ = _persist(session, model)
 
         class BrokenModelORM(FakeModelORM):
-            def to_model(self, session) -> FakeModel:
+            def to_model(self, session, **kwargs) -> FakeModel:
                 raise ValueError("Cannot deserialize")
 
         broken_repository = SQLAlchemyRepository[FakeModel](session, BrokenModelORM)
