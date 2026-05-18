@@ -30,14 +30,14 @@ class ModelORM[M: BaseModel](DeclarativeBase):
         """
         raise NotImplementedError()
 
-    def to_model(self) -> M:
+    def to_model(self, session: Session) -> M:
         """
         Convert the ORM model to a domain model.
 
+        Args:
+            session: The SQLAlchemy session.
+
         Returns:
             The domain model created from the ORM model.
-
-        Raises:
-            Exception: If the conversion fails.
         """
         raise NotImplementedError()

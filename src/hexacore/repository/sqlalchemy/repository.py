@@ -73,7 +73,7 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
         try:
             if model_orm is None:
                 raise NotFoundError(f"Model with id {id} not found")
-            model = model_orm.to_model()
+            model = model_orm.to_model(self._session)
         except Exception as e:
             return SQLAlchemyDBPromise(None, error=e)
         else:
@@ -137,7 +137,7 @@ class SQLAlchemyRepository[M: BaseModel](BaseRepository[M]):
         try:
             if model_orm is None:
                 raise NotFoundError(f"Model with id {id} not found")
-            model = model_orm.to_model()
+            model = model_orm.to_model(self._session)
         except Exception as e:
             return SQLAlchemyDBPromise(None, error=e)
         else:
