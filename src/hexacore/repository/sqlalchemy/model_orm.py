@@ -17,6 +17,7 @@ class ModelORM[M: BaseModel](DeclarativeBase):
     def from_model(
         model: M,
         session: Session,
+        **kwargs,
     ) -> "ModelORM[M]":
         """
         Create an ORM model from a domain model.
@@ -24,18 +25,24 @@ class ModelORM[M: BaseModel](DeclarativeBase):
         Args:
             model: The domain model.
             session: The SQLAlchemy session.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             The ORM entity created from the domain model.
         """
         raise NotImplementedError()
 
-    def to_model(self, session: Session) -> M:
+    def to_model(
+        self,
+        session: Session,
+        **kwargs,
+    ) -> M:
         """
         Convert the ORM model to a domain model.
 
         Args:
             session: The SQLAlchemy session.
+            **kwargs: Additional keyword arguments.
 
         Returns:
             The domain model created from the ORM model.
