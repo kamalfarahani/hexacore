@@ -51,7 +51,7 @@ class FakeModelORM(ModelORM[FakeModel]):
     def from_model(model: FakeModel, session: Session) -> "FakeModelORM":
         return FakeModelORM(name=model.name, age=model.age)
 
-    def to_model(self) -> FakeModel:
+    def to_model(self, session: Session) -> FakeModel:
         return FakeModel(name=self.name, age=self.age)
 
 
