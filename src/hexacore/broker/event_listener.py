@@ -1,7 +1,7 @@
 """Event listener for consuming messages from a broker queue."""
 
 import logging
-from typing import Generator
+from collections.abc import Generator
 
 from .connection import BaseBrokerConnection
 from .connection.exceptions import ConsumeError
@@ -32,7 +32,7 @@ class EventListener[C: BaseBrokerConnection]:
         """
         self._connection = connection
 
-    def listen(self, queue_name: str) -> Generator[dict, None, None]:
+    def listen(self, queue_name: str) -> Generator[dict]:
         """
         Listen for messages from a queue.
 
