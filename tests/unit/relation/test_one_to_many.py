@@ -1,10 +1,8 @@
-from dataclasses import dataclass
 from uuid import UUID, uuid4
 
 import pytest
 from pydantic import ValidationError
 
-from hexacore.entity import Entity
 from hexacore.relation.one_to_many import OneToMany
 from hexacore.relation.one_to_many.commands import (
     Create,
@@ -15,23 +13,7 @@ from hexacore.relation.one_to_many.commands import (
     UpdateRight,
 )
 
-
-@dataclass
-class LeftEntity(Entity[int]):
-    id: int
-
-    @property
-    def identifier(self) -> int:
-        return self.id
-
-
-@dataclass
-class RightEntity(Entity[UUID]):
-    id: UUID
-
-    @property
-    def identifier(self) -> UUID:
-        return self.id
+from ._entities import LeftEntity, RightEntity
 
 
 def test_collects_operations_for_multiple_right_entities() -> None:
