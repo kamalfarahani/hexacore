@@ -1,39 +1,41 @@
+"""Define the base collector for relation mutations."""
+
 from abc import ABC
 from types import TracebackType
 from typing import Self
 
-from .base_relation_command import BaseRelationCommand
+from .base_relation_mutation import BaseRelationMutation
 
 
 class BaseRelation(ABC):
-    """Base class for relations between entities."""
+    """Collect mutations representing changes to relations between entities."""
 
-    _commands: list[BaseRelationCommand]
+    _mutations: list[BaseRelationMutation]
 
     def __init__(self) -> None:
-        """Initialize the relation with an empty command list."""
-        self._commands = []
+        """Initialize the relation without pending changes."""
+        self._mutations = []
 
-    def add_command(self, cmd: BaseRelationCommand) -> None:
-        """Append a command to the relation.
+    def add_mutation(self, mutation: BaseRelationMutation) -> None:
+        """Record a mutation describing a pending relation change.
 
         Args:
-            cmd: Command to append.
+            mutation: Relation change to record.
         """
-        self._commands.append(cmd)
+        self._mutations.append(mutation)
 
     @property
-    def commands(self) -> list[BaseRelationCommand]:
-        """The mutable command list, in insertion order."""
-        return self._commands
+    def mutations(self) -> list[BaseRelationMutation]:
+        """Pending relation changes in insertion order."""
+        return self._mutations
 
     def __enter__(self) -> Self:
-        """Reset the command list and enter the relation context.
+        """Discard pending changes and enter the relation context.
 
         Returns:
-            This relation with a new, empty command list.
+            This relation with no pending changes.
         """
-        self._commands = []
+        self._mutations = []
         return self
 
     def __exit__(
@@ -42,7 +44,7 @@ class BaseRelation(ABC):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        """Exit the context without modifying commands or suppressing exceptions.
+        """Exit while preserving pending changes and propagating exceptions.
 
         Args:
             exc_type: Type of the exception raised in the context, or None if

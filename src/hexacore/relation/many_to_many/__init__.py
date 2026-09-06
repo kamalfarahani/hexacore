@@ -1,4 +1,4 @@
-"""Provide a command collector for many-to-many relations."""
+"""Provide a mutation collector for many-to-many relations."""
 
 from .many_to_many import ManyToMany
 
