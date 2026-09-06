@@ -1,9 +1,7 @@
-from .db_promise import BaseDBPromise
+from .db_command import BaseDBCommand
 from .repository import BaseRepository
-from .with_id import WithID
 
 __all__ = [
-    "BaseDBPromise",
+    "BaseDBCommand",
     "BaseRepository",
-    "WithID",
 ]

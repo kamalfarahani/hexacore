@@ -1,7 +1,9 @@
-from .base import BaseRepository
-from .sqlalchemy import SQLAlchemyRepository
+from .base import (
+    BaseDBCommand,
+    BaseRepository,
+)
 
 __all__ = [
+    "BaseDBCommand",
     "BaseRepository",
-    "SQLAlchemyRepository",
 ]
