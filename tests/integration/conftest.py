@@ -10,7 +10,7 @@ from hexacore.broker.connection.rabbitmq import RabbitMQConnection
 def connection(
     connection_parameters: ConnectionParameters,
 ) -> Iterator[RabbitMQConnection]:
-    """Yield an opened RabbitMQConnection and close it on teardown."""
+    """Yield an open RabbitMQ connection and close it on teardown."""
     conn = RabbitMQConnection(connection_parameters)
     conn.open()
     try:
@@ -23,5 +23,5 @@ def connection(
 def closed_connection(
     connection_parameters: ConnectionParameters,
 ) -> RabbitMQConnection:
-    """Return a RabbitMQConnection that has not been opened."""
+    """Return a RabbitMQ connection that has not been opened."""
     return RabbitMQConnection(connection_parameters)

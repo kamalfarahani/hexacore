@@ -18,14 +18,13 @@ class NoOpCommandHandler(BaseCommandHandler):
     """Command handler that performs no operation, used as a default fallback."""
 
     def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
-        """
-        Handle a command that has no operation.
+        """Handle a command that has no operation.
 
         Args:
             command: The command to handle.
 
         Returns:
-            An empty immutable list
+            An empty immutable collection of domain events.
         """
         logger.warning("No operation for command: %s", command)
         return ImmutableList([])

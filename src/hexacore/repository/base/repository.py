@@ -15,7 +15,7 @@ class BaseRepository(ABC):
     @property
     @abstractmethod
     def supported_commands(self) -> list[type[BaseDBCommand]]:
-        """Return the list of supported command types."""
+        """The command types supported by this repository."""
 
     def is_command_supported(self, command: BaseDBCommand) -> bool:
         """Check if a command is supported by the repository.
@@ -39,6 +39,6 @@ class BaseRepository(ABC):
             command: Typed command to execute.
 
         Returns:
-            Result containing the command result wrapped in a Lazy.
+            The command outcome containing a lazily evaluated result on success.
         """
         raise NotImplementedError()

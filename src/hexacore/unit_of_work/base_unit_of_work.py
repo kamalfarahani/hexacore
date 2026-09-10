@@ -10,24 +10,16 @@ from hexacore.repository import BaseRepository
 
 
 class BaseUnitOfWork[M: BaseModel](ABC):
-    """
-    Base unit of work interface.
-    """
+    """Base unit of work interface."""
 
     @property
     @abstractmethod
     def repository(self) -> BaseRepository[M]:
-        """
-        The repository for the model type managed by this unit of work.
-
-        Returns:
-            The repository instance.
-        """
+        """The repository for the model type managed by this unit of work."""
         raise NotImplementedError()
 
     def __enter__(self) -> Self:
-        """
-        Enter the unit of work context manager.
+        """Enter the unit of work context manager.
 
         Returns:
             This unit of work instance.
@@ -41,9 +33,7 @@ class BaseUnitOfWork[M: BaseModel](ABC):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        """
-        Exit the unit of work context manager.
-        """
+        """Exit the unit of work context manager."""
         self.done()
 
     @abstractmethod

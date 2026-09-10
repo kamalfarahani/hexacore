@@ -11,9 +11,7 @@ from .registry import CommandRegistry, EventRegistry
 
 
 class BaseMessageBus:
-    """
-    Base message bus implementation.
-    """
+    """Base message bus implementation."""
 
     _handle_context: HandleContext
     _command_registry: CommandRegistry
@@ -25,8 +23,7 @@ class BaseMessageBus:
         command_registry: CommandRegistry,
         event_registry: EventRegistry,
     ) -> None:
-        """
-        Initialize the message bus.
+        """Initialize the message bus.
 
         Args:
             handle_context: The context for handling commands and events.
@@ -38,8 +35,7 @@ class BaseMessageBus:
         self._event_registry = event_registry
 
     def handle(self, message: BaseCommand | BaseEvent) -> None:
-        """
-        Handle a message
+        """Handle a message.
 
         Args:
             message: The message to handle.
@@ -54,8 +50,7 @@ class BaseMessageBus:
                     messages.extend(self.handle_event(message))
 
     def handle_command(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
-        """
-        Handle a command
+        """Handle a command.
 
         Args:
             command: The command to handle.
@@ -67,8 +62,7 @@ class BaseMessageBus:
         return handler.handle(command)
 
     def handle_event(self, event: BaseEvent) -> ImmutableList[BaseEvent]:
-        """
-        Handle an event
+        """Handle an event.
 
         Args:
             event: The event to handle.

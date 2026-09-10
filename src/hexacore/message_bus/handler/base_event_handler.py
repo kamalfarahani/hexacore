@@ -10,13 +10,10 @@ from .handle_context import HandleContext
 
 
 class BaseEventHandler[Event: BaseEvent](ABC):
-    """
-    Abstract base class for event handlers in the message bus.
+    """Abstract base class for event handlers in the message bus.
 
     Subclasses must implement the ``handle`` method to process a specific
-    event type and return any resulting domain events.  Generic over
-    ``Event``, a ``BaseEvent`` subtype representing the event this handler
-    processes.
+    event type and return any resulting domain events.
 
     Attributes:
         handle_context: The context object providing shared resources and
@@ -24,8 +21,7 @@ class BaseEventHandler[Event: BaseEvent](ABC):
     """
 
     def __init__(self, handle_context: HandleContext) -> None:
-        """
-        Initialize the event handler with a handle context.
+        """Initialize the event handler with a handle context.
 
         Args:
             handle_context: The handle context to use for handling events.
@@ -37,15 +33,13 @@ class BaseEventHandler[Event: BaseEvent](ABC):
         self,
         event: Event,
     ) -> ImmutableList[BaseEvent]:
-        """
-        Handle an event and return any generated events.
+        """Handle an event and return any generated events.
 
         Args:
             event: The event to handle.
 
         Returns:
-            An immutable list of domain events produced as a result of handling
-            the event.
+            The domain events produced by handling the event, collected immutably.
         """
         raise NotImplementedError()
 
@@ -53,13 +47,12 @@ class BaseEventHandler[Event: BaseEvent](ABC):
         self,
         event: Event,
     ) -> ImmutableList[BaseEvent]:
-        """
-        Call the handler to process an event.
+        """Call the handler to process an event.
 
         Args:
             event: The event to handle.
 
         Returns:
-            An immutable list of domain events produced by handling the event.
+            The domain events produced by handling the event, collected immutably.
         """
         return self.handle(event)

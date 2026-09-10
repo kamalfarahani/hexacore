@@ -14,9 +14,7 @@ type RepoFactory[M: BaseModel] = Callable[[Session], SQLAlchemyRepository[M]]
 
 
 class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
-    """
-    SQLAlchemy unit of work implementation.
-    """
+    """SQLAlchemy unit of work implementation."""
 
     _session: Session | None
     _session_factory: SessionFactory
@@ -27,13 +25,11 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
         session_factory: SessionFactory,
         repo_factory: RepoFactory[M],
     ) -> None:
-        """
-        Initialize the unit of work.
+        """Initialize the unit of work.
 
         Args:
-            session_factory: A callable that creates a new SQLAlchemy ``Session``.
-            repo_factory: A callable that creates a ``SQLAlchemyRepository``
-                from an existing session.
+            session_factory: Factory that creates a new database session.
+            repo_factory: Factory that creates a repository from an existing session.
         """
         self._session = None
         self._session_factory = session_factory
@@ -41,12 +37,7 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
 
     @property
     def session(self) -> Session:
-        """
-        Get the database session.
-
-        Returns:
-            The current database session.
-        """
+        """The current database session, created on first access if needed."""
         if self._session is None:
             self._session = self._session_factory()
 
@@ -54,39 +45,28 @@ class SQLAlchemyUnitOfWork[M: BaseModel](BaseUnitOfWork[M]):
 
     @property
     def repository(self) -> SQLAlchemyRepository[M]:
-        """
-        Get the repository.
-
-        Returns:
-            A repository bound to the current session.
-        """
+        """A repository bound to the current session."""
         return self._repo_factory(self.session)
 
     def start(self) -> None:
-        """
-        Prepare the unit of work for use by initializing the database session.
-        """
+        """Prepare the unit of work for use by initializing the database session."""
         self._session = self._session_factory()
 
     def done(self) -> None:
-        """
-        Finish the unit of work, rolling back uncommitted changes and closing
-        the session.
+        """Finish the unit of work.
+
+        Roll back uncommitted changes and close the session.
         """
         self.rollback()
         if self._session is not None:
             self._session.close()
 
     def commit(self) -> None:
-        """
-        Flush all pending changes and commit the current transaction.
-        """
+        """Flush all pending changes and commit the current transaction."""
         if self._session is not None:
             self._session.commit()
 
     def rollback(self) -> None:
-        """
-        Discard all pending changes by rolling back the current transaction.
-        """
+        """Discard all pending changes by rolling back the current transaction."""
         if self._session is not None:
             self._session.rollback()

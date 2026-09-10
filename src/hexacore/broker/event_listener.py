@@ -10,12 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 class EventListener[C: BaseBrokerConnection]:
-    """
-    Consumes messages from a broker queue.
+    """Consumes messages from a broker queue.
 
     Wraps a broker connection and provides context manager support for
-    proper resource management.  Generic over ``C``, a
-    ``BaseBrokerConnection`` subtype.
+    proper resource management.
 
     Example:
         >>> with EventListener(connection) as listener:
@@ -24,8 +22,7 @@ class EventListener[C: BaseBrokerConnection]:
     """
 
     def __init__(self, connection: C) -> None:
-        """
-        Initialize the active event listener.
+        """Initialize the active event listener.
 
         Args:
             connection: The broker connection to use for listening to events.
@@ -33,14 +30,13 @@ class EventListener[C: BaseBrokerConnection]:
         self._connection = connection
 
     def listen(self, queue_name: str) -> Generator[dict]:
-        """
-        Listen for messages from a queue.
+        """Listen for messages from a queue.
 
         Args:
             queue_name: The name of the queue to listen to.
 
         Yields:
-            Each consumed message as a dict.
+            Each consumed message.
         """
         try:
             yield from self._connection.consume(queue_name)
@@ -48,8 +44,7 @@ class EventListener[C: BaseBrokerConnection]:
             logger.error(f"Error listening to queue {queue_name}: {e}")
 
     def __enter__(self) -> "EventListener[C]":
-        """
-        Open the connection for the event listener.
+        """Open the connection for the event listener.
 
         Returns:
             This event listener instance with an open connection.
@@ -58,8 +53,7 @@ class EventListener[C: BaseBrokerConnection]:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """
-        Close the connection for the event listener.
+        """Close the connection for the event listener.
 
         Args:
             exc_type: The exception type, or ``None``.

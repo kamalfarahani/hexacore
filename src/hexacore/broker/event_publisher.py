@@ -9,12 +9,10 @@ logger = logging.getLogger(__name__)
 
 
 class EventPublisher[C: BaseBrokerConnection]:
-    """
-    Publishes events to a broker exchange.
+    """Publishes events to a broker exchange.
 
     Wraps a broker connection and provides context manager support for
-    proper resource management.  Generic over ``C``, a
-    ``BaseBrokerConnection`` subtype.
+    proper resource management.
 
     Example:
         >>> with EventPublisher(connection) as publisher:
@@ -22,8 +20,7 @@ class EventPublisher[C: BaseBrokerConnection]:
     """
 
     def __init__(self, connection: C) -> None:
-        """
-        Initialize the event publisher.
+        """Initialize the event publisher.
 
         Args:
             connection: The broker connection to use for publishing events.
@@ -36,13 +33,12 @@ class EventPublisher[C: BaseBrokerConnection]:
         routing_key: str,
         data: dict,
     ) -> None:
-        """
-        Publish a message to an exchange.
+        """Publish a message to an exchange.
 
         Args:
             exchange_name: The name of the exchange to publish to.
             routing_key: The routing key for the message.
-            data: The data to publish as a JSON-serialisable dict.
+            data: The JSON-serialisable message data to publish.
         """
         try:
             self._connection.publish(exchange_name, routing_key, data)
@@ -50,8 +46,7 @@ class EventPublisher[C: BaseBrokerConnection]:
             logger.error(f"Error publishing to exchange {exchange_name}: {e}")
 
     def __enter__(self) -> "EventPublisher[C]":
-        """
-        Open the connection for the event publisher.
+        """Open the connection for the event publisher.
 
         Returns:
             This event publisher instance with an open connection.
@@ -60,8 +55,7 @@ class EventPublisher[C: BaseBrokerConnection]:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """
-        Close the connection for the event publisher.
+        """Close the connection for the event publisher.
 
         Args:
             exc_type: The exception type, or ``None``.

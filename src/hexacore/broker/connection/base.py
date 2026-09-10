@@ -5,24 +5,19 @@ from typing import Generator, Self
 
 
 class BaseBrokerConnection(ABC):
-    """
-    Base class for broker connections.
+    """Base class for broker connections.
 
     This class is an abstract context manager that handles broker connections.
     """
 
     @abstractmethod
     def open(self) -> None:
-        """
-        Open the connection.
-        """
+        """Open the connection."""
         raise NotImplementedError()
 
     @abstractmethod
     def close(self) -> None:
-        """
-        Close the connection.
-        """
+        """Close the connection."""
         raise NotImplementedError()
 
     @abstractmethod
@@ -31,8 +26,7 @@ class BaseBrokerConnection(ABC):
         queue_name: str,
         durable: bool = True,
     ) -> None:
-        """
-        Declare a queue on the broker.
+        """Declare a queue on the broker.
 
         Args:
             queue_name: The name of the queue to declare.
@@ -47,8 +41,7 @@ class BaseBrokerConnection(ABC):
         exchange_type: str = "direct",
         durable: bool = True,
     ) -> None:
-        """
-        Declare an exchange on the broker.
+        """Declare an exchange on the broker.
 
         Args:
             exchange_name: The name of the exchange to declare.
@@ -65,8 +58,7 @@ class BaseBrokerConnection(ABC):
         exchange_name: str,
         routing_key: str,
     ) -> None:
-        """
-        Bind a queue to an exchange with a routing key.
+        """Bind a queue to an exchange with a routing key.
 
         Args:
             queue_name: The name of the queue to bind.
@@ -82,13 +74,12 @@ class BaseBrokerConnection(ABC):
         routing_key: str,
         data: dict,
     ) -> None:
-        """
-        Publish data to an exchange with a routing key.
+        """Publish data to an exchange with a routing key.
 
         Args:
             exchange_name: The name of the exchange to publish to.
             routing_key: The routing key for the message.
-            data: The data to publish as a JSON-serialisable dict.
+            data: The JSON-serialisable message data to publish.
         """
         raise NotImplementedError()
 
@@ -97,20 +88,18 @@ class BaseBrokerConnection(ABC):
         self,
         queue_name: str,
     ) -> Generator[dict, None, None]:
-        """
-        Consume messages from a queue.
+        """Consume messages from a queue.
 
         Args:
             queue_name: The name of the queue to consume from.
 
         Yields:
-            Each consumed message as a dict.
+            Each consumed message.
         """
         raise NotImplementedError()
 
     def __enter__(self) -> Self:
-        """
-        Open the connection.
+        """Open the connection.
 
         Returns:
             This broker connection instance.
@@ -119,8 +108,7 @@ class BaseBrokerConnection(ABC):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """
-        Close the connection.
+        """Close the connection.
 
         Args:
             exc_type: The exception type, or ``None``.

@@ -14,8 +14,7 @@ type MaybeRabbitMQConnectionPair = tuple[BlockingConnection, BlockingChannel] | 
 
 
 class RabbitMQConnection(BaseBrokerConnection):
-    """
-    RabbitMQ connection manager for message broker operations.
+    """RabbitMQ connection manager for message broker operations.
 
     Provides a high-level interface for managing RabbitMQ connections,
     including queue and exchange management, message publishing, and
@@ -34,8 +33,7 @@ class RabbitMQConnection(BaseBrokerConnection):
     _connection_pair: MaybeRabbitMQConnectionPair
 
     def __init__(self, parameters: Parameters) -> None:
-        """
-        Initialize the RabbitMQ connection.
+        """Initialize the RabbitMQ connection.
 
         Args:
             parameters: The pika connection parameters for the RabbitMQ server.
@@ -44,8 +42,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         self._connection_pair = None
 
     def _get_channel(self) -> BlockingChannel:
-        """
-        Get the channel from the connection pair.
+        """Get the channel from the connection pair.
 
         Returns:
             The active pika channel.
@@ -59,8 +56,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         return channel
 
     def open(self) -> None:
-        """
-        Open the connection.
+        """Open the connection.
 
         Note:
             Opens the underlying pika ``BlockingConnection`` and channel.
@@ -75,8 +71,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         self._connection_pair = (connection, channel)
 
     def close(self) -> None:
-        """
-        Close the connection.
+        """Close the connection.
 
         Note:
             Closes the channel and underlying connection if they are open.
@@ -96,8 +91,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         queue_name: str,
         durable: bool = True,
     ) -> None:
-        """
-        Declare a queue on the RabbitMQ server.
+        """Declare a queue on the RabbitMQ server.
 
         Args:
             queue_name: The name of the queue to declare.
@@ -117,8 +111,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         exchange_type: str = "direct",
         durable: bool = True,
     ) -> None:
-        """
-        Declare an exchange on the RabbitMQ server.
+        """Declare an exchange on the RabbitMQ server.
 
         Args:
             exchange_name: The name of the exchange to declare.
@@ -141,8 +134,7 @@ class RabbitMQConnection(BaseBrokerConnection):
         exchange_name: str,
         routing_key: str,
     ) -> None:
-        """
-        Bind a queue to an exchange with a routing key.
+        """Bind a queue to an exchange with a routing key.
 
         Args:
             queue_name: The name of the queue to bind.
@@ -165,13 +157,12 @@ class RabbitMQConnection(BaseBrokerConnection):
         routing_key: str,
         data: dict,
     ) -> None:
-        """
-        Publish data to an exchange.
+        """Publish data to an exchange.
 
         Args:
             exchange_name: The name of the exchange to publish to.
             routing_key: The routing key for the message.
-            data: The data to publish as a JSON-serialisable dict.
+            data: The JSON-serialisable message data to publish.
 
         Raises:
             PublishError: If publishing fails.
@@ -191,14 +182,13 @@ class RabbitMQConnection(BaseBrokerConnection):
         self,
         queue_name: str,
     ) -> Generator[dict, None, None]:
-        """
-        Consume messages from a queue.
+        """Consume messages from a queue.
 
         Args:
             queue_name: The name of the queue to consume from.
 
         Yields:
-            Each consumed message as a dict with ``method_frame``,
+            Each consumed message with ``method_frame``,
             ``header_frame``, and ``body`` keys.
 
         Raises:

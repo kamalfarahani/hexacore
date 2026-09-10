@@ -17,7 +17,7 @@ def rabbitmq_container() -> Iterator[RabbitMqContainer]:
 def connection_parameters(
     rabbitmq_container: RabbitMqContainer,
 ) -> ConnectionParameters:
-    """Build pika ConnectionParameters pointing at the running container."""
+    """Build connection parameters pointing at the running container."""
     host = rabbitmq_container.get_container_host_ip()
     port = int(rabbitmq_container.get_exposed_port(5672))
     return ConnectionParameters(

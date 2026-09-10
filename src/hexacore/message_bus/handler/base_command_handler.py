@@ -11,13 +11,10 @@ from .handle_context import HandleContext
 
 
 class BaseCommandHandler[Command: BaseCommand](ABC):
-    """
-    Abstract base class for command handlers in the message bus.
+    """Abstract base class for command handlers in the message bus.
 
     Subclasses must implement the ``handle`` method to process a specific
-    command type and return the resulting domain events.  Generic over
-    ``Command``, a ``BaseCommand`` subtype representing the command this
-    handler processes.
+    command type and return the resulting domain events.
 
     Attributes:
         handle_context: The context object providing shared resources and
@@ -25,8 +22,7 @@ class BaseCommandHandler[Command: BaseCommand](ABC):
     """
 
     def __init__(self, handle_context: HandleContext) -> None:
-        """
-        Initialize the command handler with a handle context.
+        """Initialize the command handler with a handle context.
 
         Args:
             handle_context: The context object providing shared resources and
@@ -36,25 +32,23 @@ class BaseCommandHandler[Command: BaseCommand](ABC):
 
     @abstractmethod
     def handle(self, command: Command) -> ImmutableList[BaseEvent]:
-        """
-        Handle the given command and return the resulting domain events.
+        """Handle the given command and return the resulting domain events.
 
         Args:
             command: The command instance to handle.
 
         Returns:
-            An immutable list of domain events produced by handling the command.
+            The domain events produced by handling the command, collected immutably.
         """
         raise NotImplementedError()
 
     def __call__(self, command: Command) -> ImmutableList[BaseEvent]:
-        """
-        Make the handler callable, delegating to ``handle``.
+        """Make the handler callable, delegating to ``handle``.
 
         Args:
             command: The command instance to handle.
 
         Returns:
-            An immutable list of domain events produced by handling the command.
+            The domain events produced by handling the command, collected immutably.
         """
         return self.handle(command)

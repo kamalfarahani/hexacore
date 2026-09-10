@@ -12,16 +12,13 @@ from hexacore.message_bus.handler import (
 
 
 class CommandRegistry:
-    """
-    A registry for command handlers.
-    """
+    """A registry for command handlers."""
 
     def __init__(
         self,
         default_handler_factory: Callable[[], BaseCommandHandler],
     ) -> None:
-        """
-        Initializes the command registry with an empty defaultdict.
+        """Initialize the command registry with a default handler factory.
 
         Args:
             default_handler_factory: A factory that returns a default command handler
@@ -30,8 +27,7 @@ class CommandRegistry:
         self._registry = defaultdict(default_handler_factory)
 
     def __getitem__(self, key: type[BaseCommand]) -> BaseCommandHandler:
-        """
-        Retrieves the command handler associated with the given command type.
+        """Retrieve the command handler associated with the given command type.
 
         Args:
             key: The command type for which to retrieve the handler.
@@ -46,8 +42,7 @@ class CommandRegistry:
         key: type[BaseCommand],
         value: BaseCommandHandler,
     ):
-        """
-        Associates a command handler with a specific command type in the registry.
+        """Associate a command handler with a specific command type in the registry.
 
         Args:
             key: The command type to associate with the handler.
@@ -57,16 +52,13 @@ class CommandRegistry:
 
 
 class EventRegistry:
-    """
-    A registry for event handlers.
-    """
+    """A registry for event handlers."""
 
     def __init__(
         self,
         default_handler_factory: Callable[[], list[BaseEventHandler]],
     ) -> None:
-        """
-        Initializes the event registry with an empty defaultdict.
+        """Initialize the event registry with a default handler factory.
 
         Args:
             default_handler_factory: A factory that returns a default list of event
@@ -75,14 +67,13 @@ class EventRegistry:
         self._registry = defaultdict(default_handler_factory)
 
     def __getitem__(self, key: type[BaseEvent]) -> list[BaseEventHandler]:
-        """
-        Retrieves the list of event handlers associated with the given event type.
+        """Retrieve the list of event handlers associated with the given event type.
 
         Args:
             key: The event type for which to retrieve handlers.
 
         Returns:
-            A list of event handlers associated with the event type.
+            The event handlers associated with the event type.
         """
         return self._registry[key]
 
@@ -91,11 +82,10 @@ class EventRegistry:
         key: type[BaseEvent],
         value: list[BaseEventHandler],
     ) -> None:
-        """
-        Associates a list of event handlers with a specific event type in the registry.
+        """Associate a list of event handlers with a specific event type in the registry.
 
         Args:
             key: The event type to associate with the handlers.
-            value: A list of event handlers to associate with the event type.
+            value: The event handlers to associate with the event type.
         """
         self._registry[key] = value

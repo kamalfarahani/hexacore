@@ -12,7 +12,7 @@ class LeftEntity(Entity[int]):
 
     @property
     def identifier(self) -> int:
-        """Return the entity identifier."""
+        """The entity identifier."""
         return self.id
 
 
@@ -24,5 +24,5 @@ class RightEntity(Entity[UUID]):
 
     @property
     def identifier(self) -> UUID:
-        """Return the entity identifier."""
+        """The entity identifier."""
         return self.id
