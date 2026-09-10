@@ -1,3 +1,5 @@
+## Docstrings Format
+
 Write Google-style docstrings compatible with Sphinx's Napoleon extension.
 Keep type information in Python annotations, not in docstrings. In `Args`,
 write `name: Description.` without a type. In `Returns` and `Yields`, describe
