@@ -1,7 +1,7 @@
 from .db_command import BaseDBCommand
-from .repository import BaseRepository
+from .repository import BaseEntityRepository
 
 __all__ = [
     "BaseDBCommand",
-    "BaseRepository",
+    "BaseEntityRepository",
 ]

@@ -1,11 +1,11 @@
-from .base import (
+from .entity import (
     BaseDBCommand,
-    BaseRepository,
+    BaseEntityRepository,
 )
 from .relation import BaseRelationRepository
 
 __all__ = [
     "BaseDBCommand",
+    "BaseEntityRepository",
     "BaseRelationRepository",
-    "BaseRepository",
 ]

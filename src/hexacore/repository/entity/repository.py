@@ -9,7 +9,7 @@ from hexacore.repository.exceptions import UnsupportedCommandError
 from .db_command import BaseDBCommand
 
 
-class BaseRepository(ABC):
+class BaseEntityRepository(ABC):
     """Execute typed database commands returning promises."""
 
     @property
