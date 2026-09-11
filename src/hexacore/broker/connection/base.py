@@ -1,7 +1,8 @@
 """Abstract broker connection interface."""
 
 from abc import ABC, abstractmethod
-from typing import Generator, Self
+from collections.abc import Generator
+from typing import Self
 
 
 class BaseBrokerConnection(ABC):
@@ -87,7 +88,7 @@ class BaseBrokerConnection(ABC):
     def consume(
         self,
         queue_name: str,
-    ) -> Generator[dict, None, None]:
+    ) -> Generator[dict]:
         """Consume messages from a queue.
 
         Args:

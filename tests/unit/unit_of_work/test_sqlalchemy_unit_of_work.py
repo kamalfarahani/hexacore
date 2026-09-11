@@ -1,8 +1,8 @@
 import pytest
+from hexacore.repository.sqlalchemy.repository import SQLAlchemyRepository
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
 
-from hexacore.repository.sqlalchemy.repository import SQLAlchemyRepository
 from hexacore.unit_of_work.sqlalchemy_unit_of_work import SQLAlchemyUnitOfWork
 from tests.fakes import FakeModel, FakeModelORM
 
@@ -272,11 +272,10 @@ class TestContextManager:
         uow: SQLAlchemyUnitOfWork[FakeModel],
         engine: Engine,
     ) -> None:
-        with pytest.raises(RuntimeError):
-            with uow:
-                uow.repository.add(FakeModel(name="alice", age=30))
-                uow.session.flush()
-                raise RuntimeError("boom")
+        with pytest.raises(RuntimeError), uow:
+            uow.repository.add(FakeModel(name="alice", age=30))
+            uow.session.flush()
+            raise RuntimeError("boom")
 
         with Session(engine) as verifier:
             assert verifier.query(FakeModelORM).count() == 0

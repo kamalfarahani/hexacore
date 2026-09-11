@@ -1,5 +1,5 @@
 import logging
-from typing import Generator
+from collections.abc import Generator
 
 import pytest
 
@@ -77,7 +77,7 @@ class TestListen:
     def test_consume_error_raised_mid_stream_swallowed(
         self, fake_connection: FakeBrokerConnection
     ) -> None:
-        def flaky(queue_name: str) -> Generator[dict, None, None]:
+        def flaky(queue_name: str) -> Generator[dict]:
             yield {"id": 1}
             raise ConsumeError("mid-stream")
 
@@ -126,9 +126,8 @@ class TestContextManager:
     ) -> None:
         listener = EventListener(fake_connection)
 
-        with pytest.raises(ValueError, match="kaboom"):
-            with listener:
-                raise ValueError("kaboom")
+        with pytest.raises(ValueError, match="kaboom"), listener:
+            raise ValueError("kaboom")
 
         assert fake_connection.exit_calls == 1
         exc_type, exc_val, exc_tb = fake_connection.last_exit_info  # type: ignore[misc]

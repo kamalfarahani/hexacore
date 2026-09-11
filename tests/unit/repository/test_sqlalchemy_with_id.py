@@ -1,6 +1,6 @@
 import pytest
-
 from hexacore.repository.sqlalchemy.with_id import SQLAlchemyWithID
+
 from tests.fakes import FakeModel, FakeModelORM
 
 

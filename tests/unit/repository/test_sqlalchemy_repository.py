@@ -1,11 +1,11 @@
 import pytest
+from hexacore.repository.sqlalchemy.db_promise import SQLAlchemyDBPromise
+from hexacore.repository.sqlalchemy.repository import SQLAlchemyRepository
+from hexacore.repository.sqlalchemy.with_id import SQLAlchemyWithID
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from hexacore.repository.exceptions import NotFoundError, PromiseNotReadyError
-from hexacore.repository.sqlalchemy.db_promise import SQLAlchemyDBPromise
-from hexacore.repository.sqlalchemy.repository import SQLAlchemyRepository
-from hexacore.repository.sqlalchemy.with_id import SQLAlchemyWithID
 from tests.fakes import FakeModel, FakeModelORM
 
 

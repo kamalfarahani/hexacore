@@ -12,6 +12,7 @@ import json
 import time
 
 import pytest
+from hexacore.repository.sqlalchemy.repository import SQLAlchemyRepository
 from katharos.types import ImmutableList
 from pika import ConnectionParameters
 from pydantic import BaseModel
@@ -31,7 +32,6 @@ from hexacore.message_bus.handler import (
     NoOpCommandHandler,
 )
 from hexacore.message_bus.registry import CommandRegistry, EventRegistry
-from hexacore.repository.sqlalchemy.repository import SQLAlchemyRepository
 from hexacore.unit_of_work.sqlalchemy_unit_of_work import SQLAlchemyUnitOfWork
 from tests.fakes import FakeModel, FakeModelORM
 

@@ -1,11 +1,11 @@
-from typing import Generator
+from collections.abc import Generator
 
+from hexacore.repository.sqlalchemy.model_orm import ModelORM
+from hexacore.repository.sqlalchemy.with_id import SQLAlchemyWithID
 from pydantic import BaseModel
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from hexacore.broker.connection.base import BaseBrokerConnection
-from hexacore.repository.sqlalchemy.model_orm import ModelORM
-from hexacore.repository.sqlalchemy.with_id import SQLAlchemyWithID
 
 
 class FakeModel(BaseModel):
@@ -107,7 +107,7 @@ class FakeBrokerConnection(BaseBrokerConnection):
             raise error
         self.published.append((exchange_name, routing_key, data))
 
-    def consume(self, queue_name: str) -> Generator[dict, None, None]:
+    def consume(self, queue_name: str) -> Generator[dict]:
         self.consumed_queues.append(queue_name)
         if queue_name in self.consume_errors:
             raise self.consume_errors[queue_name]

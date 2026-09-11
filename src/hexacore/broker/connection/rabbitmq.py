@@ -1,7 +1,7 @@
 """RabbitMQ broker connection implementation."""
 
 import json
-from typing import Generator
+from collections.abc import Generator
 
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
@@ -181,7 +181,7 @@ class RabbitMQConnection(BaseBrokerConnection):
     def consume(
         self,
         queue_name: str,
-    ) -> Generator[dict, None, None]:
+    ) -> Generator[dict]:
         """Consume messages from a queue.
 
         Args:
