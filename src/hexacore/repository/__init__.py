@@ -4,8 +4,11 @@ from .entity import (
 )
 from .relation import BaseRelationRepository
 
+type BaseRepository = BaseEntityRepository | BaseRelationRepository
+
 __all__ = [
     "BaseDBCommand",
     "BaseEntityRepository",
     "BaseRelationRepository",
+    "BaseRepository",
 ]

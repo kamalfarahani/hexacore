@@ -4,17 +4,15 @@ from abc import ABC, abstractmethod
 from types import TracebackType
 from typing import Self
 
-from pydantic import BaseModel
-
 from hexacore.repository import BaseRepository
 
 
-class BaseUnitOfWork[M: BaseModel](ABC):
+class BaseUnitOfWork(ABC):
     """Base unit of work interface."""
 
     @property
     @abstractmethod
-    def repository(self) -> BaseRepository[M]:
+    def repository(self) -> BaseRepository:
         """The repository for the model type managed by this unit of work."""
         raise NotImplementedError()
 
@@ -41,6 +39,7 @@ class BaseUnitOfWork[M: BaseModel](ABC):
         """Prepare the unit of work for use."""
         raise NotImplementedError()
 
+    @abstractmethod
     def done(self) -> None:
         """Finish the unit of work and release any resources."""
         raise NotImplementedError()
