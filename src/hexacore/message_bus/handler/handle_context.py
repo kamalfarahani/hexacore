@@ -12,7 +12,7 @@ from hexacore.unit_of_work import BaseUnitOfWork
 class BaseUnitOfWorkFactory(Protocol):
     """Protocol for factories that create ``BaseUnitOfWork`` instances."""
 
-    def __call__[M: BaseModel](self, ModelType: type[M]) -> BaseUnitOfWork[M]:
+    def __call__[M: BaseModel](self, ModelType: type[M]) -> BaseUnitOfWork:
         """Create a new unit of work for the given model type.
 
         Args:
