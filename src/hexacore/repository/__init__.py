@@ -1,8 +1,4 @@
-from .entity import (
-    BaseDBCommand,
-    BaseEntityRepository,
-)
-from .relation import BaseRelationRepository
+from .base import BaseDBCommand, BaseEntityRepository, BaseRelationRepository
 
 type BaseRepository = BaseEntityRepository | BaseRelationRepository
 
