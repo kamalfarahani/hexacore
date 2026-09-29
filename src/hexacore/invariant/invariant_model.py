@@ -2,7 +2,7 @@ from inspect import isfunction
 from typing import Self
 
 from katharos.types import Result
-from pydantic import BaseModel, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 from pydantic_core import InitErrorDetails
 
 
@@ -16,9 +16,11 @@ class InvariantModel(BaseModel):
     further checks immediately. Direct invariant calls retain their Result
     contract.
 
-    Assignment validation is opt-in through Pydantic's validate_assignment
-    configuration. model_construct bypasses validation, including invariants.
+    Assignment validation is enabled by default, including invariant checks.
+    model_construct bypasses validation, including invariants.
     """
+
+    model_config = ConfigDict(validate_assignment=True)
 
     @model_validator(mode="after")
     def _check_model_invariants(self) -> Self:

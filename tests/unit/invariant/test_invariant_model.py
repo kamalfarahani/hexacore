@@ -289,14 +289,14 @@ def test_nested_model_failure_includes_field_path() -> None:
 
 
 @pytest.mark.parametrize("validate_assignment", [False, True])
-def test_assignment_validation_is_opt_in(validate_assignment: bool) -> None:
+def test_assignment_validation_defaults_to_enabled(validate_assignment: bool) -> None:
     calls: list[int] = []
 
     class Model(InvariantModel):
         model_config = (
-            ConfigDict(validate_assignment=True)
+            ConfigDict()
             if validate_assignment
-            else ConfigDict()
+            else ConfigDict(validate_assignment=False)
         )
         value: int
 
@@ -326,7 +326,6 @@ def test_assignment_field_error_prevents_invariants_and_preserves_value() -> Non
     calls: list[int] = []
 
     class Model(InvariantModel):
-        model_config = ConfigDict(validate_assignment=True)
         value: int
 
         @invariant
