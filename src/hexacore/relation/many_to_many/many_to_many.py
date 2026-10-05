@@ -12,6 +12,11 @@ from .mutations import Create, Unlink, UpdateLeft, UpdateRight
 class ManyToMany[L_ID, R_ID, L: Entity, R: Entity](BaseRelation):
     """Represent a many-to-many relation between left and right entities."""
 
+    Create = Create
+    Unlink = Unlink
+    UpdateLeft = UpdateLeft
+    UpdateRight = UpdateRight
+
     def supported_mutations(self) -> ImmutableList[type[BaseRelationMutation]]:
         """Return the mutation classes supported by this relation.
 

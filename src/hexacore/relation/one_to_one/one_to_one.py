@@ -17,6 +17,11 @@ from .mutations import (
 class OneToOne[L_ID, R_ID, L: Entity, R: Entity](BaseRelation):
     """Represent a one-to-one relation between a left and a right entity."""
 
+    Create = Create
+    Unlink = Unlink
+    UpdateLeft = UpdateLeft
+    UpdateRight = UpdateRight
+
     def supported_mutations(self) -> ImmutableList[type[BaseRelationMutation]]:
         """Return the mutation classes supported by this relation.
 
