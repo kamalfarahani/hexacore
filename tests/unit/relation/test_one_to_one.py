@@ -14,71 +14,79 @@ from hexacore.relation.one_to_one.mutations import (
 from ._entities import LeftEntity, RightEntity
 
 
-def test_collects_one_to_one_operations_in_order() -> None:
+def test_supported_mutations_lists_all_mutation_classes() -> None:
     relation = OneToOne[int, UUID, LeftEntity, RightEntity]()
+
+    assert list(relation.supported_mutations()) == [
+        Create,
+        UpdateLeft,
+        UpdateRight,
+        Unlink,
+    ]
+
+
+def test_create_mutation_builds_create_mutation() -> None:
     left = LeftEntity(7)
     right = RightEntity(uuid4())
 
-    results = [
-        relation.create(left.identifier, right.identifier),
-        relation.update_left(right.identifier, left),
-        relation.update_right(left.identifier, right),
-        relation.unlink(left.identifier, right.identifier),
-    ]
+    mutation = OneToOne[int, UUID, LeftEntity, RightEntity].create_mutation(
+        left.identifier, right.identifier
+    )
 
-    assert results == [None] * 4
-    mutations = relation.mutations
-    assert len(mutations) == 4
-    for mutation, expected_class in zip(
-        mutations,
-        [Create, UpdateLeft, UpdateRight, Unlink],
-        strict=True,
-    ):
-        assert isinstance(mutation, expected_class)
-
-    assert mutations[0].model_dump() == {
-        "left_id": left.identifier,
-        "right_id": right.identifier,
-    }
-    assert isinstance(mutations[1], UpdateLeft)
-    assert mutations[1].right_id == right.identifier
-    assert mutations[1].left is left
-
-    assert isinstance(mutations[2], UpdateRight)
-    assert mutations[2].left_id == left.identifier
-    assert mutations[2].right is right
-
-    assert mutations[3].model_dump() == {
+    assert isinstance(mutation, Create)
+    assert mutation.model_dump() == {
         "left_id": left.identifier,
         "right_id": right.identifier,
     }
 
 
-def test_context_resets_mutations_and_retains_new_mutations() -> None:
+def test_update_left_mutation_builds_update_left_mutation() -> None:
+    left = LeftEntity(7)
+    right = RightEntity(uuid4())
+
+    mutation = OneToOne[int, UUID, LeftEntity, RightEntity].update_left_mutation(
+        right.identifier, left
+    )
+
+    assert isinstance(mutation, UpdateLeft)
+    assert mutation.right_id == right.identifier
+    assert mutation.left is left
+
+
+def test_update_right_mutation_builds_update_right_mutation() -> None:
+    left = LeftEntity(7)
+    right = RightEntity(uuid4())
+
+    mutation = OneToOne[int, UUID, LeftEntity, RightEntity].update_right_mutation(
+        left.identifier, right
+    )
+
+    assert isinstance(mutation, UpdateRight)
+    assert mutation.left_id == left.identifier
+    assert mutation.right is right
+
+
+def test_unlink_mutation_builds_unlink_mutation() -> None:
+    left = LeftEntity(7)
+    right = RightEntity(uuid4())
+
+    mutation = OneToOne[int, UUID, LeftEntity, RightEntity].unlink_mutation(
+        left.identifier, right.identifier
+    )
+
+    assert isinstance(mutation, Unlink)
+    assert mutation.model_dump() == {
+        "left_id": left.identifier,
+        "right_id": right.identifier,
+    }
+
+
+def test_relation_does_not_track_mutations() -> None:
     relation = OneToOne[int, UUID, LeftEntity, RightEntity]()
-    relation.create(7, uuid4())
-    previous_mutations = relation.mutations
 
-    with relation as entered:
-        assert entered is relation
-        assert relation.mutations == []
-        assert relation.mutations is not previous_mutations
-        relation.unlink(7, uuid4())
+    OneToOne[int, UUID, LeftEntity, RightEntity].create_mutation(7, uuid4())
 
-    assert len(previous_mutations) == 1
-    assert len(relation.mutations) == 1
-    assert isinstance(relation.mutations[0], Unlink)
-
-
-def test_context_preserves_mutations_when_exception_propagates() -> None:
-    relation = OneToOne[int, UUID, LeftEntity, RightEntity]()
-
-    with pytest.raises(RuntimeError, match="operation failed"), relation:
-        relation.unlink(7, uuid4())
-        raise RuntimeError("operation failed")
-
-    assert len(relation.mutations) == 1
-    assert isinstance(relation.mutations[0], Unlink)
+    assert not hasattr(relation, "mutations")
 
 
 def test_entity_mutations_accept_matching_entities() -> None:
