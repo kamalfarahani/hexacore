@@ -284,19 +284,21 @@ def test_relation_handlers_apply_all_mutations_in_order(session, relation_case):
     session.add_all([UserRow(id=1, name="Left"), UserRow(id=2, name="Right")])
     session.commit()
 
-    relation.create(1, 2)
-    relation.update_left(2, User(1, "Updated left"))
-    relation.update_right(1, User(2, "Updated right"))
-    relation.unlink(1, 2)
-    pending = list(relation.mutations)
-    result = repository.execute_mutations(relation)
+    batch = [
+        relation.create_mutation(1, 2),
+        relation.update_left_mutation(2, User(1, "Updated left")),
+        relation.update_right_mutation(1, User(2, "Updated right")),
+        relation.unlink_mutation(1, 2),
+    ]
+    pending = list(batch)
+    result = repository.execute_mutations(batch)
     assert result.is_success()
     assert result.value is None
     session.flush()
     assert session.scalars(select(LinkRow)).all() == []
     assert session.get(UserRow, 1).name == "Updated left"
     assert session.get(UserRow, 2).name == "Updated right"
-    assert relation.mutations == pending
+    assert batch == pending
     session.rollback()
     assert session.get(UserRow, 1).name == "Left"
     assert session.get(UserRow, 2).name == "Right"
@@ -307,49 +309,50 @@ def test_relation_prevalidates_entire_batch(session, relation_case):
         pass
 
     relation, mutations = relation_case
-    relation.create(1, 2)
-    relation.add_mutation(Unknown())
-    pending = list(relation.mutations)
-    result = make_links(session, mutations).execute_mutations(relation)
+    batch = [relation.create_mutation(1, 2), Unknown()]
+    pending = list(batch)
+    result = make_links(session, mutations).execute_mutations(batch)
     assert result.is_failure()
     assert isinstance(result.error, UnsupportedMutationError)
     assert "Unknown" in str(result.error)
     assert not session.new
-    assert relation.mutations == pending
+    assert batch == pending
 
 
 def test_relation_preserves_empty_batch_and_session_ownership(session, relation_case):
     relation, mutations = relation_case
     repository = make_links(session, mutations)
-    result = repository.execute_mutations(relation)
+    result = repository.execute_mutations([])
     assert result.is_success()
     assert result.value is None
-    relation.create(1, 2)
+    batch = [relation.create_mutation(1, 2)]
     with (
         patch.object(session, "flush") as flush,
         patch.object(session, "commit") as commit,
         patch.object(session, "rollback") as rollback,
         patch.object(session, "close") as close,
     ):
-        result = repository.execute_mutations(relation)
+        result = repository.execute_mutations(batch)
         assert result.is_success()
         assert result.value is None
         for operation in (flush, commit, rollback, close):
             operation.assert_not_called()
     assert len(session.new) == 1
-    assert len(relation.mutations) == 1
+    assert len(batch) == 1
 
 
 def test_relation_stops_on_failure_and_leaves_rollback_to_caller(session, relation_case):
     relation, mutations = relation_case
-    relation.create(1, 2)
-    relation.update_left(2, User(404, "Missing"))
-    relation.create(3, 4)
-    pending = list(relation.mutations)
+    batch = [
+        relation.create_mutation(1, 2),
+        relation.update_left_mutation(2, User(404, "Missing")),
+        relation.create_mutation(3, 4),
+    ]
+    pending = list(batch)
     with pytest.raises(AttributeError):
-        make_links(session, mutations).execute_mutations(relation)
+        make_links(session, mutations).execute_mutations(batch)
     assert len(session.scalars(select(LinkRow)).all()) == 1
-    assert relation.mutations == pending
+    assert batch == pending
     session.rollback()
     assert session.scalars(select(LinkRow)).all() == []
 
@@ -357,8 +360,8 @@ def test_relation_stops_on_failure_and_leaves_rollback_to_caller(session, relati
 def test_relation_uses_most_specific_handler_and_snapshots_batch(session, relation_case):
     relation, mutations = relation_case
     calls = []
-    relation.create(1, 2)
-    concrete_type = type(relation.mutations[0])
+    batch = [relation.create_mutation(1, 2)]
+    concrete_type = type(batch[0])
 
     class Links(SQLAlchemyRelationRepository):
         @property
@@ -371,13 +374,13 @@ def test_relation_uses_most_specific_handler_and_snapshots_batch(session, relati
 
         def create(self, mutation):
             calls.append("concrete")
-            relation.create(3, 4)
+            batch.append(relation.create_mutation(3, 4))
 
-    result = Links(session).execute_mutations(relation)
+    result = Links(session).execute_mutations(batch)
     assert result.is_success()
     assert result.value is None
     assert calls == ["concrete"]
-    assert len(relation.mutations) == 2
+    assert len(batch) == 2
 
 
 def test_repositories_require_handler_mappings(session):
