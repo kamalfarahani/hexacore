@@ -248,10 +248,10 @@ def make_links(session, mutations):
         @property
         def mutation_handlers(self):
             return {
-                mutations.Create: self.create,
-                mutations.UpdateLeft: self.update_left,
-                mutations.UpdateRight: self.update_right,
-                mutations.Unlink: self.unlink,
+                mutations.CreateMutation: self.create,
+                mutations.UpdateLeftMutation: self.update_left,
+                mutations.UpdateRightMutation: self.update_right,
+                mutations.UnlinkMutation: self.unlink,
             }
 
         def create(self, mutation):
@@ -305,16 +305,16 @@ def test_relation_handlers_apply_all_mutations_in_order(session, relation_case):
 
 
 def test_relation_prevalidates_entire_batch(session, relation_case):
-    class Unknown(BaseRelationMutation):
+    class UnknownMutation(BaseRelationMutation):
         pass
 
     relation, mutations = relation_case
-    batch = [relation.create_mutation(1, 2), Unknown()]
+    batch = [relation.create_mutation(1, 2), UnknownMutation()]
     pending = list(batch)
     result = make_links(session, mutations).execute_mutations(batch)
     assert result.is_failure()
     assert isinstance(result.error, UnsupportedMutationError)
-    assert "Unknown" in str(result.error)
+    assert "UnknownMutation" in str(result.error)
     assert not session.new
     assert batch == pending
 
@@ -368,7 +368,7 @@ def test_relation_uses_most_specific_handler_and_snapshots_batch(session, relati
         def mutation_handlers(self):
             return {
                 BaseRelationMutation: lambda mutation: calls.append("base"),
-                mutations.Create: lambda mutation: calls.append("generic"),
+                mutations.CreateMutation: lambda mutation: calls.append("generic"),
                 concrete_type: self.create,
             }
 

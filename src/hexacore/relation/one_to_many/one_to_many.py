@@ -6,16 +6,21 @@ from hexacore.entity import Entity
 
 from ..base_relation import BaseRelation
 from ..base_relation_mutation import BaseRelationMutation
-from .mutations import Create, Unlink, UpdateLeft, UpdateRight
+from .mutations import (
+    CreateMutation,
+    UnlinkMutation,
+    UpdateLeftMutation,
+    UpdateRightMutation,
+)
 
 
 class OneToMany[L_ID, R_ID, L: Entity, R: Entity](BaseRelation):
     """Represents a one-to-many relation between a left entity and multiple right entities."""
 
-    Create = Create
-    Unlink = Unlink
-    UpdateLeft = UpdateLeft
-    UpdateRight = UpdateRight
+    CreateMutation = CreateMutation
+    UnlinkMutation = UnlinkMutation
+    UpdateLeftMutation = UpdateLeftMutation
+    UpdateRightMutation = UpdateRightMutation
 
     def supported_mutations(self) -> ImmutableList[type[BaseRelationMutation]]:
         """Return the mutation classes supported by this relation.
@@ -24,11 +29,11 @@ class OneToMany[L_ID, R_ID, L: Entity, R: Entity](BaseRelation):
             The create, left-update, right-update, and unlink mutation classes.
         """
         return ImmutableList[type[BaseRelationMutation]](
-            [Create, UpdateLeft, UpdateRight, Unlink]
+            [CreateMutation, UpdateLeftMutation, UpdateRightMutation, UnlinkMutation]
         )
 
     @staticmethod
-    def create_mutation(left_id: L_ID, right_id: R_ID) -> Create:
+    def create_mutation(left_id: L_ID, right_id: R_ID) -> CreateMutation:
         """Build a mutation that links one right entity to a left entity.
 
         Args:
@@ -38,13 +43,13 @@ class OneToMany[L_ID, R_ID, L: Entity, R: Entity](BaseRelation):
         Returns:
             The mutation describing the new link.
         """
-        return Create[L_ID, R_ID](
+        return CreateMutation[L_ID, R_ID](
             left_id=left_id,
             right_id=right_id,
         )
 
     @staticmethod
-    def update_left_mutation(right_id: R_ID, left: L) -> UpdateLeft:
+    def update_left_mutation(right_id: R_ID, left: L) -> UpdateLeftMutation:
         """Build a mutation that changes the left entity in the relation.
 
         Args:
@@ -54,13 +59,13 @@ class OneToMany[L_ID, R_ID, L: Entity, R: Entity](BaseRelation):
         Returns:
             The mutation describing the left-side update.
         """
-        return UpdateLeft[R_ID, L](
+        return UpdateLeftMutation[R_ID, L](
             right_id=right_id,
             left=left,
         )
 
     @staticmethod
-    def update_right_mutation(left_id: L_ID, right: R) -> UpdateRight[L_ID, R]:
+    def update_right_mutation(left_id: L_ID, right: R) -> UpdateRightMutation[L_ID, R]:
         """Build a mutation that changes one right entity in the relation.
 
         Args:
@@ -71,13 +76,13 @@ class OneToMany[L_ID, R_ID, L: Entity, R: Entity](BaseRelation):
         Returns:
             The mutation describing the right-side update.
         """
-        return UpdateRight[L_ID, R](
+        return UpdateRightMutation[L_ID, R](
             left_id=left_id,
             right=right,
         )
 
     @staticmethod
-    def unlink_mutation(left_id: L_ID, right_id: R_ID) -> Unlink[L_ID, R_ID]:
+    def unlink_mutation(left_id: L_ID, right_id: R_ID) -> UnlinkMutation[L_ID, R_ID]:
         """Build a mutation that removes one link between the specified entities.
 
         Args:
@@ -87,7 +92,7 @@ class OneToMany[L_ID, R_ID, L: Entity, R: Entity](BaseRelation):
         Returns:
             The mutation describing the link removal.
         """
-        return Unlink[L_ID, R_ID](
+        return UnlinkMutation[L_ID, R_ID](
             left_id=left_id,
             right_id=right_id,
         )

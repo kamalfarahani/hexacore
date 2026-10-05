@@ -5,7 +5,7 @@ from hexacore.entity import Entity
 from ..base_relation_mutation import BaseRelationMutation
 
 
-class Create[L_ID, R_ID](BaseRelationMutation):
+class CreateMutation[L_ID, R_ID](BaseRelationMutation):
     """Represent adding a link between a left entity and a right entity.
 
     Attributes:
@@ -17,7 +17,7 @@ class Create[L_ID, R_ID](BaseRelationMutation):
     right_id: R_ID
 
 
-class UpdateLeft[R_ID, L: Entity](BaseRelationMutation):
+class UpdateLeftMutation[R_ID, L: Entity](BaseRelationMutation):
     """Represent changing the left entity linked to a specified right entity.
 
     Attributes:
@@ -29,7 +29,7 @@ class UpdateLeft[R_ID, L: Entity](BaseRelationMutation):
     left: L
 
 
-class UpdateRight[L_ID, R: Entity](BaseRelationMutation):
+class UpdateRightMutation[L_ID, R: Entity](BaseRelationMutation):
     """Represent changing the right entity linked to a specified left entity.
 
     Attributes:
@@ -41,7 +41,7 @@ class UpdateRight[L_ID, R: Entity](BaseRelationMutation):
     right: R
 
 
-class Unlink[L_ID, R_ID](BaseRelationMutation):
+class UnlinkMutation[L_ID, R_ID](BaseRelationMutation):
     """Represent removing the link between a left entity and a right entity.
 
     Attributes:
