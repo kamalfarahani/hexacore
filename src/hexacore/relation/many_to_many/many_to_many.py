@@ -1,13 +1,26 @@
 """Build mutations representing changes to many-to-many relations."""
 
+from katharos.types import ImmutableList
+
 from hexacore.entity import Entity
 
 from ..base_relation import BaseRelation
+from ..base_relation_mutation import BaseRelationMutation
 from .mutations import Create, Unlink, UpdateLeft, UpdateRight
 
 
 class ManyToMany[L_ID, R_ID, L: Entity, R: Entity](BaseRelation):
     """Represent a many-to-many relation between left and right entities."""
+
+    def supported_mutations(self) -> ImmutableList[type[BaseRelationMutation]]:
+        """Return the mutation classes supported by this relation.
+
+        Returns:
+            The create, left-update, right-update, and unlink mutation classes.
+        """
+        return ImmutableList[type[BaseRelationMutation]](
+            [Create, UpdateLeft, UpdateRight, Unlink]
+        )
 
     @staticmethod
     def create_mutation(left_id: L_ID, right_id: R_ID) -> Create:
