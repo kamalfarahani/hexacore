@@ -44,20 +44,22 @@ class SQLAlchemyRelationRepository[R: BaseRelation](BaseRelationRepository[R]):
         """
         ...
 
-    def execute_mutations(self, relation: R) -> Result[UnsupportedMutationError, None]:
+    def execute_mutations(
+        self,
+        mutations: list[BaseRelationMutation],
+    ) -> Result[UnsupportedMutationError, None]:
         """Validate and execute a snapshot of pending mutations in order.
 
         Handler exceptions propagate immediately and stop the batch. Pending
         mutations are preserved on both success and failure.
 
         Args:
-            relation: Collector whose mutations should be applied.
+            mutations: List of mutations to execute on the relation.
 
         Returns:
             Success containing None after executing the batch, or failure
             containing an unsupported-mutation error without invoking handlers.
         """
-        mutations = tuple(relation.mutations)
         handlers = dict(self.mutation_handlers)
         pending: list[tuple[Callable[..., None], BaseRelationMutation]] = []
         for mutation in mutations:

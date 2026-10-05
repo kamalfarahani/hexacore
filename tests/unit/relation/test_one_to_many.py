@@ -14,85 +14,79 @@ from hexacore.relation.one_to_many.mutations import (
 from ._entities import LeftEntity, RightEntity
 
 
-def test_collects_operations_for_multiple_right_entities() -> None:
+def test_supported_mutations_lists_all_mutation_classes() -> None:
     relation = OneToMany[int, UUID, LeftEntity, RightEntity]()
-    left = LeftEntity(7)
-    first_right = RightEntity(uuid4())
-    second_right = RightEntity(uuid4())
 
-    results = [
-        relation.create(left.identifier, first_right.identifier),
-        relation.create(left.identifier, second_right.identifier),
-        relation.update_left(first_right.identifier, left),
-        relation.update_right(left.identifier, second_right),
-        relation.unlink(left.identifier, first_right.identifier),
+    assert list(relation.supported_mutations()) == [
+        Create,
+        UpdateLeft,
+        UpdateRight,
+        Unlink,
     ]
 
-    assert results == [None] * 5
-    mutations = relation.mutations
-    assert len(mutations) == 5
-    for mutation, expected_class in zip(
-        mutations,
-        [
-            Create,
-            Create,
-            UpdateLeft,
-            UpdateRight,
-            Unlink,
-        ],
-        strict=True,
-    ):
-        assert isinstance(mutation, expected_class)
 
-    assert mutations[0].model_dump() == {
+def test_create_mutation_builds_create_mutation() -> None:
+    left = LeftEntity(7)
+    right = RightEntity(uuid4())
+
+    mutation = OneToMany[int, UUID, LeftEntity, RightEntity].create_mutation(
+        left.identifier, right.identifier
+    )
+
+    assert isinstance(mutation, Create)
+    assert mutation.model_dump() == {
         "left_id": left.identifier,
-        "right_id": first_right.identifier,
-    }
-
-    assert mutations[1].model_dump() == {
-        "left_id": left.identifier,
-        "right_id": second_right.identifier,
-    }
-
-    assert isinstance(mutations[2], UpdateLeft)
-    assert mutations[2].right_id == first_right.identifier
-    assert mutations[2].left is left
-
-    assert isinstance(mutations[3], UpdateRight)
-    assert mutations[3].left_id == left.identifier
-    assert mutations[3].right is second_right
-
-    assert mutations[4].model_dump() == {
-        "left_id": left.identifier,
-        "right_id": first_right.identifier,
+        "right_id": right.identifier,
     }
 
 
-def test_context_resets_mutations_and_retains_new_mutations() -> None:
+def test_update_left_mutation_builds_update_left_mutation() -> None:
+    left = LeftEntity(7)
+    right = RightEntity(uuid4())
+
+    mutation = OneToMany[int, UUID, LeftEntity, RightEntity].update_left_mutation(
+        right.identifier, left
+    )
+
+    assert isinstance(mutation, UpdateLeft)
+    assert mutation.right_id == right.identifier
+    assert mutation.left is left
+
+
+def test_update_right_mutation_builds_update_right_mutation() -> None:
+    left = LeftEntity(7)
+    right = RightEntity(uuid4())
+
+    mutation = OneToMany[int, UUID, LeftEntity, RightEntity].update_right_mutation(
+        left.identifier, right
+    )
+
+    assert isinstance(mutation, UpdateRight)
+    assert mutation.left_id == left.identifier
+    assert mutation.right is right
+
+
+def test_unlink_mutation_builds_unlink_mutation() -> None:
+    left = LeftEntity(7)
+    right = RightEntity(uuid4())
+
+    mutation = OneToMany[int, UUID, LeftEntity, RightEntity].unlink_mutation(
+        left.identifier, right.identifier
+    )
+
+    assert isinstance(mutation, Unlink)
+    assert mutation.model_dump() == {
+        "left_id": left.identifier,
+        "right_id": right.identifier,
+    }
+
+
+def test_relation_does_not_track_mutations() -> None:
     relation = OneToMany[int, UUID, LeftEntity, RightEntity]()
-    relation.create(7, uuid4())
-    previous_mutations = relation.mutations
 
-    with relation as entered:
-        assert entered is relation
-        assert relation.mutations == []
-        assert relation.mutations is not previous_mutations
-        relation.unlink(7, uuid4())
+    OneToMany[int, UUID, LeftEntity, RightEntity].create_mutation(7, uuid4())
 
-    assert len(previous_mutations) == 1
-    assert len(relation.mutations) == 1
-    assert isinstance(relation.mutations[0], Unlink)
-
-
-def test_context_preserves_mutations_when_exception_propagates() -> None:
-    relation = OneToMany[int, UUID, LeftEntity, RightEntity]()
-
-    with pytest.raises(RuntimeError, match="operation failed"), relation:
-        relation.unlink(7, uuid4())
-        raise RuntimeError("operation failed")
-
-    assert len(relation.mutations) == 1
-    assert isinstance(relation.mutations[0], Unlink)
+    assert not hasattr(relation, "mutations")
 
 
 def test_entity_mutations_reject_non_entities() -> None:
