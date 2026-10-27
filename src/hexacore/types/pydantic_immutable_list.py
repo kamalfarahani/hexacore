@@ -33,7 +33,7 @@ class PydanticImmutableList(ImmutableList[T_co]):
             item_schema = core_schema.any_schema()
 
         return core_schema.no_info_after_validator_function(
-            lambda x: ImmutableList(x) if not isinstance(x, ImmutableList) else x,
+            cls,
             core_schema.list_schema(item_schema),
             serialization=core_schema.plain_serializer_function_ser_schema(
                 lambda x: list(x), return_schema=core_schema.list_schema(item_schema)
