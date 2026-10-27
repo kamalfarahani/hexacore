@@ -1,11 +1,19 @@
 from inspect import isfunction
-from typing import Self
+from typing import Any, Self, dataclass_transform
 
 from katharos.types import Result
-from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    ValidationError,
+    model_validator,
+)
 from pydantic_core import InitErrorDetails
 
 
+@dataclass_transform(kw_only_default=True, field_specifiers=(Field, PrivateAttr))
 class InvariantModel(BaseModel):
     """Model that checks marked invariants after successful field validation.
 
@@ -17,10 +25,46 @@ class InvariantModel(BaseModel):
     contract.
 
     Assignment validation is enabled by default, including invariant checks.
+    Failed assignments restore the previous fields and assignment metadata.
+    Restoration is shallow: in-place mutations and external side effects of
+    validators or invariants are not undone.
+    Subclasses inherit Pydantic configuration options and can override this
+    default with ``validate_assignment=False`` in the class declaration.
     model_construct bypasses validation, including invariants.
+
+    Examples:
+        Declare Pydantic configuration options as class keywords::
+
+            class Model(InvariantModel, frozen=True, extra="forbid"):
+                value: int
     """
 
     model_config = ConfigDict(validate_assignment=True)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Assign an attribute, restoring model state if validation raises.
+
+        Args:
+            name: Attribute to assign.
+            value: Proposed attribute value.
+        """
+        if name.startswith("_") or not type(self).model_config.get(
+            "validate_assignment"
+        ):
+            super().__setattr__(name, value)
+            return
+
+        fields = self.__dict__.copy()
+        fields_set = self.__pydantic_fields_set__.copy()
+        extra = self.__pydantic_extra__
+        extra = extra.copy() if extra is not None else None
+        try:
+            super().__setattr__(name, value)
+        except Exception:
+            object.__setattr__(self, "__dict__", fields)
+            object.__setattr__(self, "__pydantic_fields_set__", fields_set)
+            object.__setattr__(self, "__pydantic_extra__", extra)
+            raise
 
     @model_validator(mode="after")
     def _check_model_invariants(self) -> Self:

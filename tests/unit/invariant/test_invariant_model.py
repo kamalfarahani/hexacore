@@ -316,10 +316,126 @@ def test_assignment_validation_defaults_to_enabled(validate_assignment: bool) ->
             model.value = 0
         assert caught.value.errors()[0]["loc"] == ("positive",)
         assert calls == [1, 2, 0]
+        assert model.value == 2
     else:
         model.value = 0
         assert calls == [1]
+        assert model.value == 0
+
+
+@pytest.mark.parametrize("error", [ValueError("invalid"), RuntimeError("failed")])
+def test_failed_assignment_restores_default_field_and_metadata(error: Exception) -> None:
+    class Model(InvariantModel):
+        value: int = 1
+
+        @invariant
+        def positive(self) -> Result[Exception, None]:
+            if self.value <= 0:
+                raise error
+            return Result.Success(None)
+
+    model = Model()
+    expected_error = ValidationError if isinstance(error, ValueError) else type(error)
+    with pytest.raises(expected_error):
+        model.value = 0
+    assert model.value == 1
+    assert model.model_fields_set == set()
+    assert model.model_dump(exclude_unset=True) == {}
+    model.value = 2
+    assert model.value == 2
+    assert model.model_fields_set == {"value"}
+
+
+def test_failed_extra_assignment_restores_extra_fields_and_metadata() -> None:
+    class Model(InvariantModel, extra="allow"):
+        @invariant
+        def positive_extra(self) -> Result[ValueError, None]:
+            if self.model_extra and any(
+                value <= 0 for value in self.model_extra.values()
+            ):
+                return Result.Failure(ValueError("extras must be positive"))
+            return Result.Success(None)
+
+    model = Model.model_validate({"existing": 1})
+    for name in ("existing", "new"):
+        with pytest.raises(ValidationError):
+            setattr(model, name, 0)
+        assert model.model_extra == {"existing": 1}
+        assert model.model_fields_set == {"existing"}
+
+
+def test_invariant_contract_error_restores_assigned_value() -> None:
+    class Model(InvariantModel):
+        value: int
+
+        @invariant
+        def check(self) -> Result[Exception, None]:
+            if self.value == 0:
+                return Result.Success(1)  # type: ignore[arg-type]
+            return Result.Success(None)
+
+    model = Model(value=1)
+    with pytest.raises(TypeError, match="must return Success"):
+        model.value = 0
+    assert model.value == 1
+
+
+def test_frozen_class_option_preserves_construction_invariants() -> None:
+    calls: list[int] = []
+
+    class Model(InvariantModel, frozen=True):
+        value: int
+
+        @invariant
+        def positive(self) -> Result[ValueError, None]:
+            calls.append(self.value)
+            if self.value <= 0:
+                return Result.Failure(ValueError("must be positive"))
+            return Result.Success(None)
+
+    model = Model(value=1)
+    with pytest.raises(ValidationError) as caught:
+        model.value = 2
+    assert caught.value.errors()[0]["type"] == "frozen_instance"
+    assert model.value == 1
+    assert calls == [1]
+
+    with pytest.raises(ValidationError) as caught:
+        Model(value=0)
+    assert caught.value.errors()[0]["loc"] == ("positive",)
+    assert calls == [1, 0]
+
+
+def test_extra_forbid_class_option_rejects_unexpected_fields() -> None:
+    class Model(InvariantModel, extra="forbid"):
+        value: int
+
+    assert Model(value=1).value == 1
+    with pytest.raises(ValidationError) as caught:
+        Model.model_validate({"value": 1, "unexpected": 2})
+    assert caught.value.errors()[0]["type"] == "extra_forbidden"
+    assert caught.value.errors()[0]["loc"] == ("unexpected",)
+
+
+def test_class_option_can_disable_assignment_validation() -> None:
+    calls: list[int] = []
+
+    class Model(InvariantModel, validate_assignment=False):
+        value: int
+
+        @invariant
+        def positive(self) -> Result[ValueError, None]:
+            calls.append(self.value)
+            if self.value <= 0:
+                return Result.Failure(ValueError("must be positive"))
+            return Result.Success(None)
+
+    model = Model(value=1)
+    model.value = 0
     assert model.value == 0
+    model.value = "invalid"  # type: ignore[assignment]
+    assert model.value == "invalid"
+    assert calls == [1]
 
 
 def test_assignment_field_error_prevents_invariants_and_preserves_value() -> None:
