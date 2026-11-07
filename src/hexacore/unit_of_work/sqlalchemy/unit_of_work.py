@@ -16,6 +16,17 @@ type SessionFactory = Callable[[], Session]
 class SQLAlchemyUnitOfWork[
     R: (SQLAlchemyEntityRepository | SQLAlchemyRelationRepository)
 ](BaseUnitOfWork):
+    """Manage SQLAlchemy transactions and resources for a repository.
+
+    Subclasses implement ``repository`` using the shared session and cache it
+    in ``_repository``. The session is created on first access; ``start()``
+    initializes the repository and releases resources if initialization fails.
+
+    Context exit calls ``done()`` to roll back pending changes, close the
+    session, and clear cached resources. Call ``commit()`` explicitly to persist
+    changes. The unit of work can be reused after cleanup.
+    """
+
     def __init__(
         self,
         session_factory: SessionFactory,
