@@ -14,13 +14,7 @@ type RepositoryFactory[R: SQLAlchemyEntityRepository] = Callable[[Session], R]
 class SQLAlchemyEntityUnitOfWork[R: SQLAlchemyEntityRepository](
     SQLAlchemyUnitOfWork[R]
 ):
-    """Manage an entity repository and its session within a unit of work.
-
-    Create resources lazily on property access or initialize them with
-    ``start()``. Context entry calls ``start()``; context exit calls ``done()``
-    to roll back pending changes and close the session. Call ``commit()``
-    explicitly to persist changes before exit.
-    """
+    """Manage an entity repository and its session within a unit of work."""
 
     def __init__(
         self,
