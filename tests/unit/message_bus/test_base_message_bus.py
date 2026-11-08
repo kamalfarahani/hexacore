@@ -245,9 +245,11 @@ class TestHandle:
         command_registry[CommandA] = handler
         command = CommandA(payload="x")
 
-        bus.handle(command)
+        result = bus.handle(command)
 
         assert handler.received == [command]
+        assert isinstance(result, ImmutableList)
+        assert list(result) == []
 
     def test_handle_event_only_entry(
         self,
@@ -258,9 +260,11 @@ class TestHandle:
         event_registry[EventX] = [handler]
         event = EventX()
 
-        bus.handle(event)
+        result = bus.handle(event)
 
         assert handler.received == [event]
+        assert isinstance(result, ImmutableList)
+        assert list(result) == [event]
 
     def test_command_emits_events_that_are_then_handled(
         self,
@@ -306,16 +310,21 @@ class TestHandle:
                 order.append(type(event))
                 return super().handle(event)
 
+        event_x = EventX()
+        event_y = EventY()
+        event_z = EventZ()
         command_registry[CommandA] = TrackingCommandHandler(
-            produced_events=[EventX(), EventY()]
+            produced_events=[event_x, event_y]
         )
-        event_registry[EventX] = [TrackingEventHandler(produced_events=[EventZ()])]
+        event_registry[EventX] = [TrackingEventHandler(produced_events=[event_z])]
         event_registry[EventY] = [TrackingEventHandler()]
         event_registry[EventZ] = [TrackingEventHandler()]
 
-        bus.handle(CommandA())
+        result = bus.handle(CommandA())
 
         assert order == [CommandA, EventX, EventY, EventZ]
+        assert isinstance(result, ImmutableList)
+        assert list(result) == [event_x, event_y, event_z]
 
     def test_terminates_when_no_more_messages(
         self,

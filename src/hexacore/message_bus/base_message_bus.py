@@ -34,20 +34,30 @@ class BaseMessageBus:
         self._command_registry = command_registry
         self._event_registry = event_registry
 
-    def handle(self, message: BaseCommand | BaseEvent) -> None:
-        """Handle a message.
+    def handle(self, message: BaseCommand | BaseEvent) -> ImmutableList[BaseEvent]:
+        """Handle a message and all events produced by its handlers.
 
         Args:
             message: The message to handle.
+
+        Returns:
+            The events already dispatched in FIFO processing order, including
+            the original message if it is an event. If a handler raises, the
+            exception propagates without returning a partial result.
         """
         messages = [message]
+        events = []
         while messages:
             message = messages.pop(0)
+            if isinstance(message, BaseEvent):
+                events.append(message)
             match message:
                 case BaseCommand():
                     messages.extend(self.handle_command(message))
                 case BaseEvent():
                     messages.extend(self.handle_event(message))
+
+        return ImmutableList(events)
 
     def handle_command(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
         """Handle a command.
