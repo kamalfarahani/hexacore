@@ -3,25 +3,24 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from pydantic import BaseModel
-
 from hexacore.broker import EventPublisher
+from hexacore.repository import BaseRepository
 from hexacore.unit_of_work import BaseUnitOfWork
 
 
 class BaseUnitOfWorkFactory(Protocol):
     """Protocol for factories that create ``BaseUnitOfWork`` instances."""
 
-    def __call__[M: BaseModel](self, ModelType: type[M]) -> BaseUnitOfWork:
-        """Create a new unit of work for the given model type.
+    def __call__[R: BaseRepository](self, RepoType: type[R]) -> BaseUnitOfWork[R]:
+        """Create a unit of work for the given repository type.
 
         Args:
-            ModelType: The Pydantic model type the unit of work will manage.
+            RepoType: Repository class the unit of work will manage.
 
         Returns:
-            A unit of work scoped to ``ModelType``.
+            A unit of work whose repository is an instance of ``RepoType``.
         """
-        ...
+        raise NotImplementedError()
 
 
 @dataclass
