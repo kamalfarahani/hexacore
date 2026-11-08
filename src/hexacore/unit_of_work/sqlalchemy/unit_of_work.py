@@ -15,7 +15,7 @@ type SessionFactory = Callable[[], Session]
 
 class SQLAlchemyUnitOfWork[
     R: (SQLAlchemyEntityRepository | SQLAlchemyRelationRepository)
-](BaseUnitOfWork):
+](BaseUnitOfWork[R]):
     """Manage SQLAlchemy transactions and resources for a repository.
 
     Subclasses implement ``repository`` using the shared session and cache it

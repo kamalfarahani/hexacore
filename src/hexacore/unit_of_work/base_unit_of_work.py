@@ -7,12 +7,12 @@ from typing import Self
 from hexacore.repository import BaseRepository
 
 
-class BaseUnitOfWork(ABC):
+class BaseUnitOfWork[R: BaseRepository](ABC):
     """Base unit of work interface."""
 
     @property
     @abstractmethod
-    def repository(self) -> BaseRepository:
+    def repository(self) -> R:
         """The repository for the model type managed by this unit of work."""
         raise NotImplementedError()
 
