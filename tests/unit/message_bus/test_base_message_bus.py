@@ -45,12 +45,11 @@ class SubEventX(EventX):
 # ---------------------------------------------------------------------------
 
 
-class RecordingCommandHandler(BaseCommandHandler[BaseCommand, None]):
+class RecordingCommandHandler(BaseCommandHandler[BaseCommand]):
     def __init__(
         self,
         produced_events: list[BaseEvent] | None = None,
     ) -> None:
-        super().__init__(None)
         self.received: list[BaseCommand] = []
         self._produced = produced_events or []
 
@@ -59,12 +58,11 @@ class RecordingCommandHandler(BaseCommandHandler[BaseCommand, None]):
         return ImmutableList(list(self._produced))
 
 
-class RecordingEventHandler(BaseEventHandler[BaseEvent, None]):
+class RecordingEventHandler(BaseEventHandler[BaseEvent]):
     def __init__(
         self,
         produced_events: list[BaseEvent] | None = None,
     ) -> None:
-        super().__init__(None)
         self.received: list[BaseEvent] = []
         self._produced = produced_events or []
 

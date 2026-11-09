@@ -14,17 +14,7 @@ from .base_command_handler import (
 logger = logging.getLogger(__name__)
 
 
-class NoOpCommandHandler(BaseCommandHandler[BaseCommand, None]):
-    """Fallback handler that logs a warning and produces no events.
-
-    Requires no dependencies and sets its context to ``None``. Registries can
-    use this class directly as their default handler factory.
-    """
-
-    def __init__(self) -> None:
-        """Initialize the fallback handler without application dependencies."""
-        super().__init__(None)
-
+class NoOpCommandHandler(BaseCommandHandler[BaseCommand]):
     def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
         """Log a warning containing the command and return no events.
 

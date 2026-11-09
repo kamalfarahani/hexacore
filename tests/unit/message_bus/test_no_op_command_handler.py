@@ -57,11 +57,3 @@ class TestCall:
 
         assert isinstance(result, ImmutableList)
         assert list(result) == []
-
-
-class TestInit:
-    def test_needs_no_context(
-        self,
-        handler: NoOpCommandHandler,
-    ) -> None:
-        assert handler.handle_context is None

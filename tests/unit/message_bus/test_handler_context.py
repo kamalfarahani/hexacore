@@ -22,24 +22,30 @@ class ApplicationContext:
     received: list[BaseCommand | BaseEvent] = field(default_factory=list)
 
 
-class ContextCommandHandler(BaseCommandHandler[SampleCommand, ApplicationContext]):
+class ContextCommandHandler(BaseCommandHandler[SampleCommand]):
+    def __init__(self, context: ApplicationContext) -> None:
+        self.context = context
+
     def handle(self, command: SampleCommand) -> ImmutableList[BaseEvent]:
-        self.handle_context.received.append(command)
+        self.context.received.append(command)
         return ImmutableList(
-            [SampleEvent(payload=self.handle_context.prefix + command.payload)]
+            [SampleEvent(payload=self.context.prefix + command.payload)]
         )
 
 
-class ContextEventHandler(BaseEventHandler[SampleEvent, ApplicationContext]):
+class ContextEventHandler(BaseEventHandler[SampleEvent]):
+    def __init__(self, context: ApplicationContext) -> None:
+        self.context = context
+
     def handle(self, event: SampleEvent) -> ImmutableList[BaseEvent]:
-        self.handle_context.received.append(event)
+        self.context.received.append(event)
         return ImmutableList(
-            [SampleEvent(payload=self.handle_context.prefix + event.payload)]
+            [SampleEvent(payload=self.context.prefix + event.payload)]
         )
 
 
 @pytest.mark.parametrize("call_handler", [False, True], ids=["handle", "call"])
-def test_command_handler_uses_application_context(
+def test_command_handler_manages_its_own_context(
     call_handler: bool,
 ) -> None:
     context = ApplicationContext(prefix="before:")
@@ -50,14 +56,14 @@ def test_command_handler_uses_application_context(
 
     result = handler(message) if call_handler else handler.handle(message)
 
-    assert handler.handle_context is context
+    assert handler.context is context
     assert context.received == [message]
     assert isinstance(result, ImmutableList)
     assert list(result) == [SampleEvent(payload="after:input")]
 
 
 @pytest.mark.parametrize("call_handler", [False, True], ids=["handle", "call"])
-def test_event_handler_uses_application_context(
+def test_event_handler_manages_its_own_context(
     call_handler: bool,
 ) -> None:
     context = ApplicationContext(prefix="before:")
@@ -68,7 +74,7 @@ def test_event_handler_uses_application_context(
 
     result = handler(message) if call_handler else handler.handle(message)
 
-    assert handler.handle_context is context
+    assert handler.context is context
     assert context.received == [message]
     assert isinstance(result, ImmutableList)
     assert list(result) == [SampleEvent(payload="after:input")]

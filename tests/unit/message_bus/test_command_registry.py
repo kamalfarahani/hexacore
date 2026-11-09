@@ -15,11 +15,10 @@ class CommandB(BaseCommand):
     pass
 
 
-class FakeHandler(BaseCommandHandler[BaseCommand, None]):
+class FakeHandler(BaseCommandHandler[BaseCommand]):
     """Minimal handler used to exercise registry storage and lookup."""
 
     def __init__(self, label: str) -> None:
-        super().__init__(None)
         self.label = label
 
     def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
