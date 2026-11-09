@@ -1,18 +1,15 @@
 import pytest
 from katharos.types import ImmutableList
 
-from hexacore.broker.event_publisher import EventPublisher
 from hexacore.command import BaseCommand
 from hexacore.event import BaseEvent
 from hexacore.message_bus.base_message_bus import BaseMessageBus
 from hexacore.message_bus.handler import (
     BaseCommandHandler,
     BaseEventHandler,
-    HandleContext,
     NoOpCommandHandler,
 )
 from hexacore.message_bus.registry import CommandRegistry, EventRegistry
-from tests.fakes import FakeBrokerConnection
 
 # ---------------------------------------------------------------------------
 # Test message types
@@ -48,12 +45,12 @@ class SubEventX(EventX):
 # ---------------------------------------------------------------------------
 
 
-class RecordingCommandHandler(BaseCommandHandler):
+class RecordingCommandHandler(BaseCommandHandler[BaseCommand, None]):
     def __init__(
         self,
         produced_events: list[BaseEvent] | None = None,
     ) -> None:
-        # Skip parent __init__: handle_context is not used in unit tests.
+        super().__init__(None)
         self.received: list[BaseCommand] = []
         self._produced = produced_events or []
 
@@ -62,11 +59,12 @@ class RecordingCommandHandler(BaseCommandHandler):
         return ImmutableList(list(self._produced))
 
 
-class RecordingEventHandler(BaseEventHandler):
+class RecordingEventHandler(BaseEventHandler[BaseEvent, None]):
     def __init__(
         self,
         produced_events: list[BaseEvent] | None = None,
     ) -> None:
+        super().__init__(None)
         self.received: list[BaseEvent] = []
         self._produced = produced_events or []
 
@@ -81,19 +79,8 @@ class RecordingEventHandler(BaseEventHandler):
 
 
 @pytest.fixture
-def handle_context() -> HandleContext:
-    def uow_factory(ModelType):  # pragma: no cover - never called in these tests
-        raise AssertionError("unit_of_work_factory should not be called")
-
-    return HandleContext(
-        unit_of_work_factory=uow_factory,
-        event_publisher=EventPublisher(FakeBrokerConnection()),
-    )
-
-
-@pytest.fixture
-def command_registry(handle_context: HandleContext) -> CommandRegistry:
-    return CommandRegistry(lambda: NoOpCommandHandler(handle_context))
+def command_registry() -> CommandRegistry:
+    return CommandRegistry(NoOpCommandHandler)
 
 
 @pytest.fixture
@@ -103,11 +90,10 @@ def event_registry() -> EventRegistry:
 
 @pytest.fixture
 def bus(
-    handle_context: HandleContext,
     command_registry: CommandRegistry,
     event_registry: EventRegistry,
 ) -> BaseMessageBus:
-    return BaseMessageBus(handle_context, command_registry, event_registry)
+    return BaseMessageBus(command_registry, event_registry)
 
 
 # ---------------------------------------------------------------------------
@@ -119,11 +105,9 @@ class TestInit:
     def test_stores_dependencies(
         self,
         bus: BaseMessageBus,
-        handle_context: HandleContext,
         command_registry: CommandRegistry,
         event_registry: EventRegistry,
     ) -> None:
-        assert bus._handle_context is handle_context
         assert bus._command_registry is command_registry
         assert bus._event_registry is event_registry
 

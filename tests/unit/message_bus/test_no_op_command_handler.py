@@ -3,11 +3,8 @@ import logging
 import pytest
 from katharos.types import ImmutableList
 
-from hexacore.broker.event_publisher import EventPublisher
 from hexacore.command import BaseCommand
-from hexacore.message_bus.handler.handle_context import HandleContext
 from hexacore.message_bus.handler.no_op_command_handler import NoOpCommandHandler
-from tests.fakes import FakeBrokerConnection
 
 
 class SampleCommand(BaseCommand):
@@ -15,21 +12,8 @@ class SampleCommand(BaseCommand):
 
 
 @pytest.fixture
-def handle_context() -> HandleContext:
-    # NoOpCommandHandler never touches the context, but BaseCommandHandler
-    # requires one. We pass real, minimal collaborators rather than mocks.
-    def uow_factory(ModelType):  # pragma: no cover - never called
-        raise AssertionError("unit_of_work_factory should not be called")
-
-    return HandleContext(
-        unit_of_work_factory=uow_factory,
-        event_publisher=EventPublisher(FakeBrokerConnection()),
-    )
-
-
-@pytest.fixture
-def handler(handle_context: HandleContext) -> NoOpCommandHandler:
-    return NoOpCommandHandler(handle_context)
+def handler() -> NoOpCommandHandler:
+    return NoOpCommandHandler()
 
 
 class TestHandle:
@@ -76,9 +60,8 @@ class TestCall:
 
 
 class TestInit:
-    def test_stores_handle_context(
+    def test_needs_no_context(
         self,
         handler: NoOpCommandHandler,
-        handle_context: HandleContext,
     ) -> None:
-        assert handler.handle_context is handle_context
+        assert handler.handle_context is None

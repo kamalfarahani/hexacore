@@ -15,14 +15,11 @@ class CommandB(BaseCommand):
     pass
 
 
-class FakeHandler(BaseCommandHandler):
-    """A real, minimal handler used as a fake.
-
-    Bypasses the parent ``__init__`` since these tests only care about the
-    registry's storage/lookup behavior, not about how a handler executes.
-    """
+class FakeHandler(BaseCommandHandler[BaseCommand, None]):
+    """Minimal handler used to exercise registry storage and lookup."""
 
     def __init__(self, label: str) -> None:
+        super().__init__(None)
         self.label = label
 
     def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:

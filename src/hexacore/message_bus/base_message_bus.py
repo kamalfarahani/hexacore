@@ -6,31 +6,26 @@ from toolz import concat
 from hexacore.command import BaseCommand
 from hexacore.event import BaseEvent
 
-from .handler import HandleContext
 from .registry import CommandRegistry, EventRegistry
 
 
 class BaseMessageBus:
     """Base message bus implementation."""
 
-    _handle_context: HandleContext
     _command_registry: CommandRegistry
     _event_registry: EventRegistry
 
     def __init__(
         self,
-        handle_context: HandleContext,
         command_registry: CommandRegistry,
         event_registry: EventRegistry,
     ) -> None:
         """Initialize the message bus.
 
         Args:
-            handle_context: The context for handling commands and events.
             command_registry: The registry for command handlers.
             event_registry: The registry for event handlers.
         """
-        self._handle_context = handle_context
         self._command_registry = command_registry
         self._event_registry = event_registry
 
