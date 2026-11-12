@@ -1,9 +1,12 @@
+from collections.abc import Sequence
+
 import pytest
 from katharos.types import ImmutableList
 
 from hexacore.command import BaseCommand
 from hexacore.event import BaseEvent
 from hexacore.message_bus.base_message_bus import BaseMessageBus
+from hexacore.message_bus.extension import Extension, HandlerPair
 from hexacore.message_bus.handler import (
     BaseCommandHandler,
     BaseEventHandler,
@@ -48,7 +51,7 @@ class SubEventX(EventX):
 class RecordingCommandHandler(BaseCommandHandler[BaseCommand]):
     def __init__(
         self,
-        produced_events: list[BaseEvent] | None = None,
+        produced_events: Sequence[BaseEvent] | None = None,
     ) -> None:
         self.received: list[BaseCommand] = []
         self._produced = produced_events or []
@@ -61,7 +64,7 @@ class RecordingCommandHandler(BaseCommandHandler[BaseCommand]):
 class RecordingEventHandler(BaseEventHandler[BaseEvent]):
     def __init__(
         self,
-        produced_events: list[BaseEvent] | None = None,
+        produced_events: Sequence[BaseEvent] | None = None,
     ) -> None:
         self.received: list[BaseEvent] = []
         self._produced = produced_events or []
@@ -69,6 +72,13 @@ class RecordingEventHandler(BaseEventHandler[BaseEvent]):
     def handle(self, event: BaseEvent) -> ImmutableList[BaseEvent]:
         self.received.append(event)
         return ImmutableList(list(self._produced))
+
+
+class CommandAHandler(BaseCommandHandler[CommandA]):
+    """Turn a command payload into an event to exercise specialized handlers."""
+
+    def handle(self, command: CommandA) -> ImmutableList[BaseEvent]:
+        return ImmutableList([EventX(payload=command.payload)])
 
 
 # ---------------------------------------------------------------------------
@@ -283,12 +293,12 @@ class TestHandle:
         order: list[type] = []
 
         class TrackingCommandHandler(RecordingCommandHandler):
-            def handle(self, command):
+            def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
                 order.append(type(command))
                 return super().handle(command)
 
         class TrackingEventHandler(RecordingEventHandler):
-            def handle(self, event):
+            def handle(self, event: BaseEvent) -> ImmutableList[BaseEvent]:
                 order.append(type(event))
                 return super().handle(event)
 
@@ -355,3 +365,114 @@ class TestHandle:
         # one EventZ.
         assert len(y_handler.received) == 2
         assert len(z_handler.received) == 2
+
+
+class TestInstallExtension:
+    def test_installs_multiple_handlers(
+        self,
+        bus: BaseMessageBus,
+    ) -> None:
+        handler_a = CommandAHandler()
+        handler_b = RecordingCommandHandler(produced_events=[EventY()])
+        extension = Extension(
+            ImmutableList(
+                [
+                    HandlerPair(CommandA, handler_a),
+                    HandlerPair(CommandB, handler_b),
+                ]
+            )
+        )
+
+        bus.install_extension(extension)
+        result_a = bus.handle_command(CommandA(payload="installed"))
+        command_b = CommandB()
+        result_b = bus.handle_command(command_b)
+
+        assert list(result_a) == [EventX(payload="installed")]
+        assert list(result_b) == [EventY()]
+        assert handler_b.received == [command_b]
+
+    def test_dispatches_events_from_installed_handler(
+        self,
+        bus: BaseMessageBus,
+        event_registry: EventRegistry,
+    ) -> None:
+        event_handler = RecordingEventHandler(produced_events=[EventY()])
+        event_registry[EventX] = [event_handler]
+        bus.install_extension(
+            Extension(ImmutableList([HandlerPair(CommandA, CommandAHandler())]))
+        )
+
+        result = bus.handle(CommandA(payload="cascade"))
+
+        assert list(result) == [EventX(payload="cascade"), EventY()]
+        assert event_handler.received == [EventX(payload="cascade")]
+
+    @pytest.mark.parametrize("registration", ["explicit", "default", "extension"])
+    def test_replaces_existing_handler_and_preserves_other_commands(
+        self,
+        bus: BaseMessageBus,
+        command_registry: CommandRegistry,
+        registration: str,
+    ) -> None:
+        original: BaseCommandHandler[BaseCommand] = RecordingCommandHandler(
+            produced_events=[EventZ()]
+        )
+        match registration:
+            case "explicit":
+                command_registry[CommandA] = original
+            case "default":
+                original = command_registry[CommandA]
+            case "extension":
+                bus.install_extension(
+                    Extension(ImmutableList([HandlerPair(CommandA, original)]))
+                )
+        other = RecordingCommandHandler(produced_events=[EventY()])
+        command_registry[CommandB] = other
+
+        bus.install_extension(
+            Extension(ImmutableList([HandlerPair(CommandA, CommandAHandler())]))
+        )
+
+        assert list(bus.handle_command(CommandA(payload="replacement"))) == [
+            EventX(payload="replacement")
+        ]
+        assert command_registry[CommandA] is not original
+        assert command_registry[CommandB] is other
+        assert list(bus.handle_command(CommandB())) == [EventY()]
+
+    def test_last_pair_wins_for_duplicate_command_types(
+        self,
+        bus: BaseMessageBus,
+    ) -> None:
+        first = RecordingCommandHandler(produced_events=[EventZ()])
+        bus.install_extension(
+            Extension(
+                ImmutableList(
+                    [
+                        HandlerPair(CommandA, first),
+                        HandlerPair(CommandA, CommandAHandler()),
+                    ]
+                )
+            )
+        )
+
+        result = bus.handle_command(CommandA(payload="last"))
+
+        assert list(result) == [EventX(payload="last")]
+        assert first.received == []
+
+    def test_empty_extension_preserves_existing_handlers(
+        self,
+        bus: BaseMessageBus,
+        command_registry: CommandRegistry,
+    ) -> None:
+        handler = CommandAHandler()
+        command_registry[CommandA] = handler
+
+        bus.install_extension(Extension(ImmutableList([])))
+
+        assert command_registry[CommandA] is handler
+        assert list(bus.handle_command(CommandA(payload="unchanged"))) == [
+            EventX(payload="unchanged")
+        ]
