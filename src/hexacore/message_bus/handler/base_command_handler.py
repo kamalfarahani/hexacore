@@ -9,6 +9,11 @@ from hexacore.event import BaseEvent
 
 
 class BaseCommandHandler[Command: BaseCommand](ABC):
+    """Define command processing that produces domain events.
+
+    Subclasses implement ``handle``; calling an instance delegates to it.
+    """
+
     @abstractmethod
     def handle(self, command: Command) -> ImmutableList[BaseEvent]:
         """Handle the given command and return the resulting domain events.

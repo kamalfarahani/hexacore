@@ -12,7 +12,7 @@ from hexacore.message_bus.handler import (
 
 
 class CommandRegistry:
-    """A registry for command handlers."""
+    """Map exact command types to handlers, creating defaults on first lookup."""
 
     def __init__(
         self,
@@ -33,7 +33,8 @@ class CommandRegistry:
             key: The command type for which to retrieve the handler.
 
         Returns:
-            The command handler associated with the command type.
+            The registered handler, creating and storing a default handler if
+            the command type is missing.
         """
         return self._registry[key]
 
@@ -52,7 +53,7 @@ class CommandRegistry:
 
 
 class EventRegistry:
-    """A registry for event handlers."""
+    """Map exact event types to ordered handler lists, creating defaults on lookup."""
 
     def __init__(
         self,
@@ -73,7 +74,8 @@ class EventRegistry:
             key: The event type for which to retrieve handlers.
 
         Returns:
-            The event handlers associated with the event type.
+            The stored handler list, creating and storing a default list if the
+            event type is missing. Changes to the returned list affect the registry.
         """
         return self._registry[key]
 

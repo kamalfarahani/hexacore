@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class NoOpCommandHandler(BaseCommandHandler[BaseCommand]):
+    """Provide a fallback that logs unhandled commands without producing events."""
+
     def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
         """Log a warning containing the command and return no events.
 

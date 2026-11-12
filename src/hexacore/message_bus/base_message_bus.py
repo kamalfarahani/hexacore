@@ -5,12 +5,17 @@ from toolz import concat
 
 from hexacore.command import BaseCommand
 from hexacore.event import BaseEvent
+from hexacore.message_bus.extension import Extension
 
 from .registry import CommandRegistry, EventRegistry
 
 
 class BaseMessageBus:
-    """Base message bus implementation."""
+    """Dispatch messages by exact type and process resulting events in FIFO order.
+
+    Commands use a single registered handler, while events invoke all handlers
+    registered for their type. Handler exceptions propagate to the caller.
+    """
 
     _command_registry: CommandRegistry
     _event_registry: EventRegistry
@@ -55,7 +60,9 @@ class BaseMessageBus:
         return ImmutableList(events)
 
     def handle_command(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
-        """Handle a command.
+        """Invoke the handler registered for the command's exact type.
+
+        Produced events are returned without being dispatched.
 
         Args:
             command: The command to handle.
@@ -67,7 +74,9 @@ class BaseMessageBus:
         return handler.handle(command)
 
     def handle_event(self, event: BaseEvent) -> ImmutableList[BaseEvent]:
-        """Handle an event.
+        """Invoke handlers registered for the event's exact type in registry order.
+
+        Produced events are concatenated without being dispatched.
 
         Args:
             event: The event to handle.
@@ -86,3 +95,15 @@ class BaseMessageBus:
                 ]
             )
         )
+
+    def install_extension(self, extension: Extension) -> None:
+        """Register an extension's command handlers in their supplied order.
+
+        Existing registrations for the same command type are replaced. If an
+        extension contains duplicate command types, the last registration wins.
+
+        Args:
+            extension: The collection of command handler registrations to install.
+        """
+        for handler_pair in extension.handlers:
+            self._command_registry[handler_pair.command] = handler_pair.handler
