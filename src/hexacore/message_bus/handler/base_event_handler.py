@@ -8,6 +8,11 @@ from hexacore.event import BaseEvent
 
 
 class BaseEventHandler[Event: BaseEvent](ABC):
+    """React to domain events and optionally produce further events.
+
+    Subclasses implement ``handle``; calling an instance delegates to it.
+    """
+
     @abstractmethod
     def handle(
         self,
