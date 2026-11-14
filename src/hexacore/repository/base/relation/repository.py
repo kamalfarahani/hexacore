@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 
 from katharos.types import Result
 
-from hexacore.relation import BaseRelation, BaseRelationMutation
+from hexacore.relation import BaseRelationMutation
 from hexacore.repository.exceptions import UnsupportedMutationError
 
 
-class BaseRelationRepository[R: BaseRelation](ABC):
+class BaseRelationRepository(ABC):
     """Define the interface for executing pending relation mutations."""
 
     @abstractmethod

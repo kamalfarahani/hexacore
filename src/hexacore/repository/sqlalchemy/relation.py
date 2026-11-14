@@ -6,12 +6,12 @@ from collections.abc import Callable, Mapping
 from katharos.types import Result
 from sqlalchemy.orm import Session
 
-from hexacore.relation import BaseRelation, BaseRelationMutation
+from hexacore.relation import BaseRelationMutation
 from hexacore.repository.base import BaseRelationRepository
 from hexacore.repository.exceptions import UnsupportedMutationError
 
 
-class SQLAlchemyRelationRepository[R: BaseRelation](BaseRelationRepository[R]):
+class SQLAlchemyRelationRepository(BaseRelationRepository):
     """Dispatch relation mutations using a caller-owned SQLAlchemy session.
 
     Execution preserves the collector and does not manage transactions.
