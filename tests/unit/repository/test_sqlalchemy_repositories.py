@@ -89,7 +89,7 @@ class DeleteUser(BaseDBCommand[None]):
         return type(None)
 
 
-class Users(SQLAlchemyEntityRepository[User]):
+class Users(SQLAlchemyEntityRepository):
     @property
     def command_handlers(self):
         return {

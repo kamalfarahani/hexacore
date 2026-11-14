@@ -7,12 +7,11 @@ from typing import Any, cast
 from katharos.types import Lazy, Result
 from sqlalchemy.orm import Session
 
-from hexacore.entity import Entity
 from hexacore.repository.base import BaseDBCommand, BaseEntityRepository
 from hexacore.repository.exceptions import UnsupportedCommandError
 
 
-class SQLAlchemyEntityRepository[E: Entity](BaseEntityRepository):
+class SQLAlchemyEntityRepository(BaseEntityRepository):
     """Dispatch entity commands using a caller-owned SQLAlchemy session.
 
     Subclasses map command classes to bound methods. Each handler accepts
