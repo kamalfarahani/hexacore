@@ -4,7 +4,7 @@ from abc import abstractmethod
 from collections.abc import Callable, Mapping
 from typing import Any, cast
 
-from katharos.types import Lazy, Result
+from katharos.types import Result
 from sqlalchemy.orm import Session
 
 from hexacore.entity import Entity
@@ -16,9 +16,10 @@ class SQLAlchemyEntityRepository[E: Entity](BaseEntityRepository):
     """Dispatch entity commands using a caller-owned SQLAlchemy session.
 
     Subclasses map command classes to bound methods. Each handler accepts
-    its command, performs database work immediately, and returns a ``Lazy``
-    producing the command's declared result. The caller controls flushing
-    and transactions, and must flush before resolving database-generated IDs.
+    its command, performs database work immediately, and returns the command's
+    declared output. Commands may declare lazy outputs when conversion must
+    wait for a caller-controlled flush, such as for database-generated IDs.
+    The caller controls flushing and transactions.
     """
 
     def __init__(self, session: Session) -> None:
@@ -38,11 +39,11 @@ class SQLAlchemyEntityRepository[E: Entity](BaseEntityRepository):
     @abstractmethod
     def command_handlers(
         self,
-    ) -> Mapping[type[BaseDBCommand[Any]], Callable[..., Lazy[Any]]]:
-        """Command classes mapped to bound handlers returning lazy results.
+    ) -> Mapping[type[BaseDBCommand[Any]], Callable[..., Any]]:
+        """Command classes mapped to bound handlers returning declared outputs.
 
         Each handler accepts one instance of its registered command class
-        and returns a lazy value matching that command's result annotation.
+        and returns a value matching that command's result annotation.
         """
         ...
 
@@ -53,16 +54,16 @@ class SQLAlchemyEntityRepository[E: Entity](BaseEntityRepository):
 
     def execute[O](
         self, command: BaseDBCommand[O]
-    ) -> Result[UnsupportedCommandError, Lazy[O]]:
-        """Invoke a registered handler immediately and return its lazy result.
+    ) -> Result[UnsupportedCommandError, O]:
+        """Invoke a registered handler immediately and return its output.
 
         Args:
             command: Command whose exact class selects the handler.
 
         Returns:
-            Success containing the handler's lazy result, or failure containing
+            Success containing the handler's output, or failure containing
             an unsupported-command error. Handler exceptions propagate;
-            conversion exceptions surface when the lazy result is resolved.
+            lazy conversion exceptions surface when a lazy output is resolved.
         """
         handler = self.command_handlers.get(type(command))
         if handler is None:
@@ -71,4 +72,4 @@ class SQLAlchemyEntityRepository[E: Entity](BaseEntityRepository):
                     f"Unsupported command type: {type(command).__qualname__}"
                 )
             )
-        return Result.Success(cast(Lazy[O], handler(command)))
+        return Result.Success(cast(O, handler(command)))

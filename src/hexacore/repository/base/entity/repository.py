@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from katharos.types import Lazy, Result
+from katharos.types import Result
 
 from hexacore.repository.exceptions import UnsupportedCommandError
 
@@ -10,7 +10,7 @@ from .db_command import BaseDBCommand
 
 
 class BaseEntityRepository(ABC):
-    """Execute typed database commands returning promises."""
+    """Execute typed database commands returning their declared outputs."""
 
     @property
     @abstractmethod
@@ -32,13 +32,14 @@ class BaseEntityRepository(ABC):
     def execute[O](
         self,
         command: BaseDBCommand[O],
-    ) -> Result[UnsupportedCommandError, Lazy[O]]:
+    ) -> Result[UnsupportedCommandError, O]:
         """Execute a database command.
 
         Args:
             command: Typed command to execute.
 
         Returns:
-            The command outcome containing a lazily evaluated result on success.
+            Success containing the command's output, or failure containing an
+            unsupported-command error.
         """
         raise NotImplementedError()

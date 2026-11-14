@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from unittest.mock import patch
 
 import pytest
 from katharos.types import Lazy
@@ -53,12 +52,12 @@ class User(Entity[int]):
 
 
 @dataclass
-class AddUser(BaseDBCommand[User]):
+class AddUser(BaseDBCommand[Lazy[User]]):
     name: str
 
     @property
-    def return_type(self) -> type[User]:
-        return User
+    def return_type(self) -> type[Lazy[User]]:
+        return Lazy[User]
 
 
 @dataclass
@@ -104,23 +103,45 @@ class Users(SQLAlchemyEntityRepository[User]):
         self.session.add(row)
         return Lazy(lambda: User(row.id, row.name))
 
-    def get(self, command: GetUser) -> Lazy[User | None]:
+    def get(self, command: GetUser) -> User | None:
         row = self.session.get(UserRow, command.id)
-        return Lazy(lambda: None if row is None else User(row.id, row.name))
+        return None if row is None else User(row.id, row.name)
 
-    def rename(self, command: RenameUser) -> Lazy[None]:
+    def rename(self, command: RenameUser) -> None:
         row = self.session.get(UserRow, command.id)
         if row is None:
             raise LookupError(command.id)
         row.name = command.name
-        return Lazy.pure(None)
 
-    def delete(self, command: DeleteUser) -> Lazy[None]:
+    def delete(self, command: DeleteUser) -> None:
         row = self.session.get(UserRow, command.id)
         if row is None:
             raise LookupError(command.id)
         self.session.delete(row)
-        return Lazy.pure(None)
+
+
+class RecordingSession(Session):
+    """Record lifecycle operations while using a real database session."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.operations = []
+
+    def flush(self, objects=None):
+        self.operations.append("flush")
+        return super().flush(objects)
+
+    def commit(self):
+        self.operations.append("commit")
+        return super().commit()
+
+    def rollback(self):
+        self.operations.append("rollback")
+        return super().rollback()
+
+    def close(self):
+        self.operations.append("close")
+        return super().close()
 
 
 @pytest.fixture
@@ -128,7 +149,7 @@ def session():
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
     try:
-        with Session(engine) as session:
+        with RecordingSession(engine) as session:
             yield session
     finally:
         engine.dispose()
@@ -139,34 +160,32 @@ def test_entity_crud_and_lazy_generated_identifier(session):
     assert isinstance(repository, BaseEntityRepository)
     assert repository.session is session
 
-    with (
-        patch.object(session, "flush", wraps=session.flush) as flush,
-        patch.object(session, "commit", wraps=session.commit) as commit,
-        patch.object(session, "rollback", wraps=session.rollback) as rollback,
-        patch.object(session, "close", wraps=session.close) as close,
-    ):
-        result = repository.execute(AddUser("Alice"))
-        assert result.is_success()
-        row = next(iter(session.new))
-        assert row.name == "Alice"
-        assert row.id is None
-        for operation in (flush, commit, rollback, close):
-            operation.assert_not_called()
+    result = repository.execute(AddUser("Alice"))
+    assert result.is_success()
+    assert isinstance(result.value, Lazy)
+    row = next(iter(session.new))
+    assert row.name == "Alice"
+    assert row.id is None
+    assert session.operations == []
 
     session.flush()
     user = result.value.resolve()
     assert user == User(row.id, "Alice")
     assert user.id is not None
     assert result.value.resolve() is user
-    assert repository.execute(GetUser(user.id)).value.resolve() == user
-    assert repository.execute(GetUser(404)).value.resolve() is None
+    assert repository.execute(GetUser(user.id)).value == user
+    assert repository.execute(GetUser(404)).value is None
 
-    repository.execute(RenameUser(user.id, "Bob"))
+    renamed = repository.execute(RenameUser(user.id, "Bob"))
+    assert renamed.is_success()
+    assert renamed.value is None
     session.flush()
-    assert repository.execute(GetUser(user.id)).value.resolve().name == "Bob"
-    repository.execute(DeleteUser(user.id))
+    assert repository.execute(GetUser(user.id)).value.name == "Bob"
+    deleted = repository.execute(DeleteUser(user.id))
+    assert deleted.is_success()
+    assert deleted.value is None
     session.flush()
-    assert repository.execute(GetUser(user.id)).value.resolve() is None
+    assert repository.execute(GetUser(user.id)).value is None
 
 
 def test_entity_changes_can_be_rolled_back_by_caller(session):
@@ -326,17 +345,10 @@ def test_relation_preserves_empty_batch_and_session_ownership(session, relation_
     assert result.is_success()
     assert result.value is None
     batch = [relation.create_mutation(1, 2)]
-    with (
-        patch.object(session, "flush") as flush,
-        patch.object(session, "commit") as commit,
-        patch.object(session, "rollback") as rollback,
-        patch.object(session, "close") as close,
-    ):
-        result = repository.execute_mutations(batch)
-        assert result.is_success()
-        assert result.value is None
-        for operation in (flush, commit, rollback, close):
-            operation.assert_not_called()
+    result = repository.execute_mutations(batch)
+    assert result.is_success()
+    assert result.value is None
+    assert session.operations == []
     assert len(session.new) == 1
     assert len(batch) == 1
 
