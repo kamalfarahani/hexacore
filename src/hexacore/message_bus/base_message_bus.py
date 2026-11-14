@@ -71,7 +71,7 @@ class BaseMessageBus:
             The events resulting from the command handling.
         """
         handler = self._command_registry[type(command)]
-        return handler.handle(command)
+        return handler.handle(command).events
 
     def handle_event(self, event: BaseEvent) -> ImmutableList[BaseEvent]:
         """Invoke handlers registered for the event's exact type in registry order.
@@ -90,7 +90,7 @@ class BaseMessageBus:
                 [
                     handler(
                         event,
-                    )
+                    ).events
                     for handler in handlers
                 ]
             )

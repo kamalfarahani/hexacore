@@ -1,9 +1,12 @@
 from collections.abc import Generator
 from typing import Self
 
+from katharos.types import ImmutableList
 from pydantic import BaseModel
 
 from hexacore.broker.connection.base import BaseBrokerConnection
+from hexacore.event import BaseEvent
+from hexacore.message_bus.handler import BaseHandleResult
 
 
 class FakeModel(BaseModel):
@@ -79,3 +82,15 @@ class FakeBrokerConnection(BaseBrokerConnection):
         self.exit_calls += 1
         self.last_exit_info = (exc_type, exc_val, exc_tb)
         self.close()
+
+
+class FakeHandleResult(BaseHandleResult):
+    """Expose supplied events as a handler result for tests."""
+
+    def __init__(self, events: ImmutableList[BaseEvent]) -> None:
+        self._events = events
+
+    @property
+    def events(self) -> ImmutableList[BaseEvent]:
+        """The events produced by the test handler."""
+        return self._events

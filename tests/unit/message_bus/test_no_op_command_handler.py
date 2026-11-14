@@ -4,7 +4,10 @@ import pytest
 from katharos.types import ImmutableList
 
 from hexacore.command import BaseCommand
-from hexacore.message_bus.handler.no_op_command_handler import NoOpCommandHandler
+from hexacore.message_bus.handler.no_op_command_handler import (
+    NoOpCommandHandler,
+    NoOpHandleResult,
+)
 
 
 class SampleCommand(BaseCommand):
@@ -17,11 +20,12 @@ def handler() -> NoOpCommandHandler:
 
 
 class TestHandle:
-    def test_returns_empty_immutable_list(self, handler: NoOpCommandHandler) -> None:
+    def test_returns_result_with_empty_immutable_events(self, handler: NoOpCommandHandler) -> None:
         result = handler.handle(SampleCommand(payload="x"))
 
-        assert isinstance(result, ImmutableList)
-        assert list(result) == []
+        assert isinstance(result, NoOpHandleResult)
+        assert isinstance(result.events, ImmutableList)
+        assert list(result.events) == []
 
     def test_logs_warning_with_command(
         self,
@@ -43,17 +47,19 @@ class TestHandle:
             for record in caplog.records
         )
 
-    def test_returns_fresh_list_each_call(self, handler: NoOpCommandHandler) -> None:
+    def test_returns_fresh_result_each_call(self, handler: NoOpCommandHandler) -> None:
         first = handler.handle(SampleCommand(payload="a"))
         second = handler.handle(SampleCommand(payload="b"))
 
-        assert list(first) == []
-        assert list(second) == []
+        assert first is not second
+        assert list(first.events) == []
+        assert list(second.events) == []
 
 
 class TestCall:
     def test_call_delegates_to_handle(self, handler: NoOpCommandHandler) -> None:
         result = handler(SampleCommand(payload="x"))
 
-        assert isinstance(result, ImmutableList)
-        assert list(result) == []
+        assert isinstance(result, NoOpHandleResult)
+        assert isinstance(result.events, ImmutableList)
+        assert list(result.events) == []

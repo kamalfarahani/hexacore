@@ -10,9 +10,12 @@ from hexacore.message_bus.extension import Extension, HandlerPair
 from hexacore.message_bus.handler import (
     BaseCommandHandler,
     BaseEventHandler,
+    BaseHandleResult,
     NoOpCommandHandler,
 )
 from hexacore.message_bus.registry import CommandRegistry, EventRegistry
+
+from tests.fakes import FakeHandleResult
 
 # ---------------------------------------------------------------------------
 # Test message types
@@ -48,7 +51,7 @@ class SubEventX(EventX):
 # ---------------------------------------------------------------------------
 
 
-class RecordingCommandHandler(BaseCommandHandler[BaseCommand]):
+class RecordingCommandHandler(BaseCommandHandler[BaseCommand, FakeHandleResult]):
     def __init__(
         self,
         produced_events: Sequence[BaseEvent] | None = None,
@@ -56,12 +59,12 @@ class RecordingCommandHandler(BaseCommandHandler[BaseCommand]):
         self.received: list[BaseCommand] = []
         self._produced = produced_events or []
 
-    def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
+    def handle(self, command: BaseCommand) -> FakeHandleResult:
         self.received.append(command)
-        return ImmutableList(list(self._produced))
+        return FakeHandleResult(ImmutableList(list(self._produced)))
 
 
-class RecordingEventHandler(BaseEventHandler[BaseEvent]):
+class RecordingEventHandler(BaseEventHandler[BaseEvent, FakeHandleResult]):
     def __init__(
         self,
         produced_events: Sequence[BaseEvent] | None = None,
@@ -69,16 +72,16 @@ class RecordingEventHandler(BaseEventHandler[BaseEvent]):
         self.received: list[BaseEvent] = []
         self._produced = produced_events or []
 
-    def handle(self, event: BaseEvent) -> ImmutableList[BaseEvent]:
+    def handle(self, event: BaseEvent) -> FakeHandleResult:
         self.received.append(event)
-        return ImmutableList(list(self._produced))
+        return FakeHandleResult(ImmutableList(list(self._produced)))
 
 
-class CommandAHandler(BaseCommandHandler[CommandA]):
+class CommandAHandler(BaseCommandHandler[CommandA, FakeHandleResult]):
     """Turn a command payload into an event to exercise specialized handlers."""
 
-    def handle(self, command: CommandA) -> ImmutableList[BaseEvent]:
-        return ImmutableList([EventX(payload=command.payload)])
+    def handle(self, command: CommandA) -> FakeHandleResult:
+        return FakeHandleResult(ImmutableList([EventX(payload=command.payload)]))
 
 
 # ---------------------------------------------------------------------------
@@ -93,7 +96,7 @@ def command_registry() -> CommandRegistry:
 
 @pytest.fixture
 def event_registry() -> EventRegistry:
-    return EventRegistry(list)
+    return EventRegistry(lambda: ImmutableList([]))
 
 
 @pytest.fixture
@@ -155,7 +158,7 @@ class TestHandleCommand:
     ) -> None:
         result = bus.handle_command(CommandB())
 
-        # NoOpCommandHandler returns an empty list.
+        # NoOpCommandHandler produces no events.
         assert list(result) == []
         # The default handler was materialized into the registry.
         assert isinstance(command_registry[CommandB], NoOpCommandHandler)
@@ -183,7 +186,7 @@ class TestHandleEvent:
     ) -> None:
         h1 = RecordingEventHandler()
         h2 = RecordingEventHandler()
-        event_registry[EventX] = [h1, h2]
+        event_registry[EventX] = ImmutableList([h1, h2])
         event = EventX(payload="hello")
 
         bus.handle_event(event)
@@ -198,7 +201,7 @@ class TestHandleEvent:
     ) -> None:
         h1 = RecordingEventHandler(produced_events=[EventY()])
         h2 = RecordingEventHandler(produced_events=[EventZ(), EventZ()])
-        event_registry[EventX] = [h1, h2]
+        event_registry[EventX] = ImmutableList([h1, h2])
 
         result = bus.handle_event(EventX())
 
@@ -220,7 +223,7 @@ class TestHandleEvent:
         event_registry: EventRegistry,
     ) -> None:
         parent_handler = RecordingEventHandler()
-        event_registry[EventX] = [parent_handler]
+        event_registry[EventX] = ImmutableList([parent_handler])
 
         bus.handle_event(SubEventX())
 
@@ -249,7 +252,7 @@ class TestHandle:
         event_registry: EventRegistry,
     ) -> None:
         handler = RecordingEventHandler()
-        event_registry[EventX] = [handler]
+        event_registry[EventX] = ImmutableList([handler])
         event = EventX()
 
         result = bus.handle(event)
@@ -271,8 +274,8 @@ class TestHandle:
         )
         x_handler = RecordingEventHandler()
         y_handler = RecordingEventHandler()
-        event_registry[EventX] = [x_handler]
-        event_registry[EventY] = [y_handler]
+        event_registry[EventX] = ImmutableList([x_handler])
+        event_registry[EventY] = ImmutableList([y_handler])
 
         bus.handle(CommandA())
 
@@ -293,12 +296,12 @@ class TestHandle:
         order: list[type] = []
 
         class TrackingCommandHandler(RecordingCommandHandler):
-            def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
+            def handle(self, command: BaseCommand) -> FakeHandleResult:
                 order.append(type(command))
                 return super().handle(command)
 
         class TrackingEventHandler(RecordingEventHandler):
-            def handle(self, event: BaseEvent) -> ImmutableList[BaseEvent]:
+            def handle(self, event: BaseEvent) -> FakeHandleResult:
                 order.append(type(event))
                 return super().handle(event)
 
@@ -308,9 +311,11 @@ class TestHandle:
         command_registry[CommandA] = TrackingCommandHandler(
             produced_events=[event_x, event_y]
         )
-        event_registry[EventX] = [TrackingEventHandler(produced_events=[event_z])]
-        event_registry[EventY] = [TrackingEventHandler()]
-        event_registry[EventZ] = [TrackingEventHandler()]
+        event_registry[EventX] = ImmutableList(
+            [TrackingEventHandler(produced_events=[event_z])]
+        )
+        event_registry[EventY] = ImmutableList([TrackingEventHandler()])
+        event_registry[EventZ] = ImmutableList([TrackingEventHandler()])
 
         result = bus.handle(CommandA())
 
@@ -350,14 +355,16 @@ class TestHandle:
         # EventX   -> two handlers, each emitting one EventY
         # EventY   -> one handler emitting one EventZ
         command_registry[CommandA] = RecordingCommandHandler(produced_events=[EventX()])
-        event_registry[EventX] = [
-            RecordingEventHandler(produced_events=[EventY()]),
-            RecordingEventHandler(produced_events=[EventY()]),
-        ]
+        event_registry[EventX] = ImmutableList(
+            [
+                RecordingEventHandler(produced_events=[EventY()]),
+                RecordingEventHandler(produced_events=[EventY()]),
+            ]
+        )
         y_handler = RecordingEventHandler(produced_events=[EventZ()])
         z_handler = RecordingEventHandler()
-        event_registry[EventY] = [y_handler]
-        event_registry[EventZ] = [z_handler]
+        event_registry[EventY] = ImmutableList([y_handler])
+        event_registry[EventZ] = ImmutableList([z_handler])
 
         bus.handle(CommandA())
 
@@ -398,7 +405,7 @@ class TestInstallExtension:
         event_registry: EventRegistry,
     ) -> None:
         event_handler = RecordingEventHandler(produced_events=[EventY()])
-        event_registry[EventX] = [event_handler]
+        event_registry[EventX] = ImmutableList([event_handler])
         bus.install_extension(
             Extension(ImmutableList([HandlerPair(CommandA, CommandAHandler())]))
         )
@@ -415,7 +422,7 @@ class TestInstallExtension:
         command_registry: CommandRegistry,
         registration: str,
     ) -> None:
-        original: BaseCommandHandler[BaseCommand] = RecordingCommandHandler(
+        original: BaseCommandHandler[BaseCommand, BaseHandleResult] = RecordingCommandHandler(
             produced_events=[EventZ()]
         )
         match registration:

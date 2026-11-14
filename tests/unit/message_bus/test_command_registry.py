@@ -2,9 +2,10 @@ import pytest
 from katharos.types import ImmutableList
 
 from hexacore.command import BaseCommand
-from hexacore.event import BaseEvent
 from hexacore.message_bus.handler import BaseCommandHandler
 from hexacore.message_bus.registry import CommandRegistry
+
+from tests.fakes import FakeHandleResult
 
 
 class CommandA(BaseCommand):
@@ -15,14 +16,14 @@ class CommandB(BaseCommand):
     pass
 
 
-class FakeHandler(BaseCommandHandler[BaseCommand]):
+class FakeHandler(BaseCommandHandler[BaseCommand, FakeHandleResult]):
     """Minimal handler used to exercise registry storage and lookup."""
 
     def __init__(self, label: str) -> None:
         self.label = label
 
-    def handle(self, command: BaseCommand) -> ImmutableList[BaseEvent]:
-        return ImmutableList([])
+    def handle(self, command: BaseCommand) -> FakeHandleResult:
+        return FakeHandleResult(ImmutableList([]))
 
 
 class CountingDefaultFactory:

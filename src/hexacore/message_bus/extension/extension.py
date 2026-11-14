@@ -5,15 +5,15 @@ from dataclasses import dataclass
 from katharos.types import ImmutableList
 
 from hexacore.command import BaseCommand
-from hexacore.message_bus.handler import BaseCommandHandler
+from hexacore.message_bus.handler import BaseCommandHandler, BaseHandleResult
 
 
 @dataclass(frozen=True)
-class HandlerPair[C: BaseCommand]:
+class HandlerPair[C: BaseCommand, R: BaseHandleResult]:
     """Bind an exact command type to the handler used to process it."""
 
     command: type[C]
-    handler: BaseCommandHandler[C]
+    handler: BaseCommandHandler[C, R]
 
 
 class Extension:

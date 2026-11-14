@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 from collections.abc import Callable
+from typing import cast
 
 from katharos.types import ImmutableList
 
@@ -19,15 +20,20 @@ class CommandRegistry:
 
     def __init__(
         self,
-        default_handler_factory: Callable[[], BaseCommandHandler],
+        default_handler_factory: Callable[
+            [], BaseCommandHandler[BaseCommand, BaseHandleResult]
+        ],
     ) -> None:
         """Initialize the command registry with a default handler factory.
 
         Args:
             default_handler_factory: A factory that returns a default command handler
-                when a command type has no registered handler.
+                when a command type has no registered handler. Default handlers
+                must support every command type.
         """
-        self._registry = defaultdict(default_handler_factory)
+        self._registry: defaultdict[type[BaseCommand], object] = defaultdict(
+            default_handler_factory
+        )
 
     def __getitem__[C: BaseCommand](
         self,
@@ -42,13 +48,14 @@ class CommandRegistry:
             The registered handler, creating and storing a default handler if
             the command type is missing.
         """
-        return self._registry[key]
+        # Registration preserves the relationship between each key and handler.
+        return cast(BaseCommandHandler[C, BaseHandleResult], self._registry[key])
 
     def __setitem__[C: BaseCommand](
         self,
         key: type[C],
         value: BaseCommandHandler[C, BaseHandleResult],
-    ):
+    ) -> None:
         """Associate a command handler with a specific command type in the registry.
 
         Args:
@@ -63,15 +70,20 @@ class EventRegistry:
 
     def __init__(
         self,
-        default_handler_factory: Callable[[], ImmutableList[BaseEventHandler]],
+        default_handler_factory: Callable[
+            [], ImmutableList[BaseEventHandler[BaseEvent, BaseHandleResult]]
+        ],
     ) -> None:
         """Initialize the event registry with a default handler factory.
 
         Args:
             default_handler_factory: A factory that returns an immutable list of
                 event handlers when an event type has no registered handlers.
+                Default handlers must support every event type.
         """
-        self._registry = defaultdict(default_handler_factory)
+        self._registry: defaultdict[type[BaseEvent], object] = defaultdict(
+            default_handler_factory
+        )
 
     def __getitem__[E: BaseEvent](
         self,
@@ -86,7 +98,10 @@ class EventRegistry:
             The stored immutable handler list, creating and storing a default
             immutable list if the event type is missing.
         """
-        return self._registry[key]
+        # Registration preserves the relationship between each key and handlers.
+        return cast(
+            ImmutableList[BaseEventHandler[E, BaseHandleResult]], self._registry[key]
+        )
 
     def __setitem__[E: BaseEvent](
         self,
