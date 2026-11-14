@@ -2,37 +2,38 @@
 
 from abc import ABC, abstractmethod
 
-from katharos.types import ImmutableList
-
 from hexacore.command import BaseCommand
-from hexacore.event import BaseEvent
+
+from .base_handle_result import BaseHandleResult
 
 
-class BaseCommandHandler[Command: BaseCommand](ABC):
-    """Define command processing that produces domain events.
+class BaseCommandHandler[Command: BaseCommand, R: BaseHandleResult](ABC):
+    """Process commands and return application-defined results.
 
     Subclasses implement ``handle``; calling an instance delegates to it.
+    Results expose produced domain events through their ``events`` property
+    and may carry additional application-specific information.
     """
 
     @abstractmethod
-    def handle(self, command: Command) -> ImmutableList[BaseEvent]:
-        """Handle the given command and return the resulting domain events.
+    def handle(self, command: Command) -> R:
+        """Process a command and return its result, including produced events.
 
         Args:
             command: The command instance to handle.
 
         Returns:
-            The domain events produced by handling the command, collected immutably.
+            The processing result exposing the produced domain events.
         """
         raise NotImplementedError()
 
-    def __call__(self, command: Command) -> ImmutableList[BaseEvent]:
+    def __call__(self, command: Command) -> R:
         """Make the handler callable, delegating to ``handle``.
 
         Args:
             command: The command instance to handle.
 
         Returns:
-            The domain events produced by handling the command, collected immutably.
+            The result returned by ``handle``, passed through unchanged.
         """
         return self.handle(command)
