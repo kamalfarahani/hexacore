@@ -3,11 +3,14 @@
 from collections import defaultdict
 from collections.abc import Callable
 
+from katharos.types import ImmutableList
+
 from hexacore.command import BaseCommand
 from hexacore.event import BaseEvent
 from hexacore.message_bus.handler import (
     BaseCommandHandler,
     BaseEventHandler,
+    BaseHandleResult,
 )
 
 
@@ -26,7 +29,10 @@ class CommandRegistry:
         """
         self._registry = defaultdict(default_handler_factory)
 
-    def __getitem__(self, key: type[BaseCommand]) -> BaseCommandHandler:
+    def __getitem__[C: BaseCommand](
+        self,
+        key: type[C],
+    ) -> BaseCommandHandler[C, BaseHandleResult]:
         """Retrieve the command handler associated with the given command type.
 
         Args:
@@ -38,10 +44,10 @@ class CommandRegistry:
         """
         return self._registry[key]
 
-    def __setitem__(
+    def __setitem__[C: BaseCommand](
         self,
-        key: type[BaseCommand],
-        value: BaseCommandHandler,
+        key: type[C],
+        value: BaseCommandHandler[C, BaseHandleResult],
     ):
         """Associate a command handler with a specific command type in the registry.
 
@@ -53,38 +59,41 @@ class CommandRegistry:
 
 
 class EventRegistry:
-    """Map exact event types to ordered handler lists, creating defaults on lookup."""
+    """Map exact event types to immutable handler lists, creating defaults on lookup."""
 
     def __init__(
         self,
-        default_handler_factory: Callable[[], list[BaseEventHandler]],
+        default_handler_factory: Callable[[], ImmutableList[BaseEventHandler]],
     ) -> None:
         """Initialize the event registry with a default handler factory.
 
         Args:
-            default_handler_factory: A factory that returns a default list of event
-                handlers when an event type has no registered handlers.
+            default_handler_factory: A factory that returns an immutable list of
+                event handlers when an event type has no registered handlers.
         """
         self._registry = defaultdict(default_handler_factory)
 
-    def __getitem__(self, key: type[BaseEvent]) -> list[BaseEventHandler]:
+    def __getitem__[E: BaseEvent](
+        self,
+        key: type[E],
+    ) -> ImmutableList[BaseEventHandler[E, BaseHandleResult]]:
         """Retrieve the list of event handlers associated with the given event type.
 
         Args:
             key: The event type for which to retrieve handlers.
 
         Returns:
-            The stored handler list, creating and storing a default list if the
-            event type is missing. Changes to the returned list affect the registry.
+            The stored immutable handler list, creating and storing a default
+            immutable list if the event type is missing.
         """
         return self._registry[key]
 
-    def __setitem__(
+    def __setitem__[E: BaseEvent](
         self,
-        key: type[BaseEvent],
-        value: list[BaseEventHandler],
+        key: type[E],
+        value: ImmutableList[BaseEventHandler[E, BaseHandleResult]],
     ) -> None:
-        """Associate a list of event handlers with a specific event type in the registry.
+        """Associate an immutable handler list with a specific event type.
 
         Args:
             key: The event type to associate with the handlers.
